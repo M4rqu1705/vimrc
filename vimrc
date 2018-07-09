@@ -44,6 +44,9 @@ if has("autocmd")
 
     " Map surround selection to <leader>s and eliminate S
     autocmd VimEnter * imap <leader>s S
+
+    " Close vim if the only window left open is a NERDTree?
+    " autocmd bufenter * if (winnr("$") == 1 && exists("b:NERDTree") && b:NERDTree.isTabTree()) | q | endif
   augroup END
 
 endif "has("autocmd")
@@ -56,6 +59,8 @@ call plug#begin('$VIM/vim80/plugin')
   Plug 'junegunn/vim-emoji'
   Plug 'tpope/vim-surround'
   Plug 'tpope/vim-repeat'
+  Plug 'SirVer/ultisnips'
+  Plug 'scrooloose/nerdtree'
   " List ends here. Plugins become visible to VIM
 call plug#end()
 
@@ -77,6 +82,12 @@ nnoremap k gk
 " Remap j to gj to intuitively jump lines downwards
 nnoremap j gj
 
+" Big jump up (move up one page)
+nnoremap <leader>k <c-u>
+
+" Big jump down (move down one page)
+nnoremap <leader>j <c-d>
+
 " <leader>u toggles the case of the current word
 nnoremap <leader>u Bviw~<space><esc>
 
@@ -84,11 +95,19 @@ nnoremap <leader>u Bviw~<space><esc>
 nnoremap <leader>U BviW~<space><esc>
 
 " Big jump left (to first non-blank character)
-nnoremap <leader>h ^<space>
+nnoremap <leader>h g^<space>
 
 " Big jump right (to last non-blank character)
-nnoremap <leader>l g_
+nnoremap <leader>l g_<cr>
 
+" Remap ev to edit vimrc file
+nnoremap <leader>ev :tabedit /c/Program\ Files/Git/etc/vimrc<cr>
+
+" Remap sv to "refresh" vimrc
+nnoremap <leader>sv :source /c/Program\ Files/Git/etc/vimrc<cr>
+
+" ================================================== Buffers ==================================================
+set hidden
 
 " ================================================== Dictionaries ==================================================
 set spell spelllang=en,es
@@ -113,7 +132,7 @@ set statusline=%<%F%h%m%r\ [%{&ff}]\ (%{strftime(\"%H:%M\ %d/%m/%Y\",getftime(ex
 set ai                          " set auto-indenting on for programming
 set wrap
 set linebreak
-set showbreak=\.\.\.\
+set showbreak=\.\.\.\ 
 set nolist
 set textwidth=0
 set wrapmargin=0
@@ -158,3 +177,61 @@ inoremap <Tab> <C-R>=Tab_Or_Complete()<CR>
 
 " ================================================== Code folding ==================================================
 set foldmethod=manual       " manual fold
+
+" ================================================== NERDtree ====================================================
+nnoremap <leader>nt :NERDTreeToggle<cr>
+let g:NERDTreeDirArrowExpandable = '▸'
+let g:NERDTreeDirArrowCollapsible = '▾'
+
+
+" ================================================= Auto commenting =================================================
+let s:comment_map = { 
+    \   "c": '\/\/\ ',
+    \   "cpp": '\/\/\ ',
+    \   "go": '\/\/\ ',
+    \   "java": '\/\/\ ',
+    \   "javascript": '\/\/\ ',
+    \   "lua": '--',
+    \   "scala": '\/\/\ ',
+    \   "php": '\/\/\ ',
+    \   "python": '#\ ',
+    \   "ruby": '#\ ',
+    \   "rust": '\/\/',
+    \   "sh": '#',
+    \   "desktop": '#',
+    \   "fstab": '#',
+    \   "conf": '#',
+    \   "profile": '#',
+    \   "bashrc": '#',
+    \   "bash_profile": '#',
+    \   "mail": '>',
+    \   "eml": '>',
+    \   "bat": 'REM',
+    \   "ahk": ';',
+    \   "vim": '"',
+    \   "tex": '%',
+    \ }
+
+function! ToggleComment()
+    if has_key(s:comment_map, &filetype)
+        let comment_leader = s:comment_map[&filetype]
+        if getline('.') =~ "^\\s*" . comment_leader . " " 
+            " Uncomment the line
+            execute "silent s/^\\(\\s*\\)" . comment_leader . " /\\1/"
+        else 
+            if getline('.') =~ "^\\s*" . comment_leader
+                " Uncomment the line
+                execute "silent s/^\\(\\s*\\)" . comment_leader . "/\\1/"
+            else
+                " Comment the line
+                execute "silent s/^\\(\\s*\\)/\\1" . comment_leader . " /"
+            end
+        end
+    else
+        echo "No comment leader found for filetype"
+    end
+endfunction
+
+
+nnoremap <leader>cc :call ToggleComment()<cr>
+vnoremap <leader>C :call ToggleComment()<cr>
