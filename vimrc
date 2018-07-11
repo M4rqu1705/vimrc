@@ -59,8 +59,8 @@ call plug#begin('$VIM/vim80/plugin')
   Plug 'junegunn/vim-emoji'
   Plug 'tpope/vim-surround'
   Plug 'tpope/vim-repeat'
-  Plug 'SirVer/ultisnips'
-  Plug 'scrooloose/nerdtree'
+  " Plug 'sirver/ultisnips'
+  " Plug 'scrooloose/nerdtree'
   " List ends here. Plugins become visible to VIM
 call plug#end()
 
@@ -108,6 +108,7 @@ nnoremap <leader>sv :source /c/Program\ Files/Git/etc/vimrc<cr>
 
 " ================================================== Buffers ==================================================
 set hidden
+set viminfo='999,<50,s10,h,%,/0,:99,@99
 
 " ================================================== Dictionaries ==================================================
 set spell spelllang=en,es
@@ -138,10 +139,7 @@ set textwidth=0
 set wrapmargin=0
 set formatoptions=nB1lcw
 set virtualedit=insert
-set tabstop=2
-set shiftwidth=2
-set softtabstop=4
-set expandtab
+set tabstop=8 softtabstop=0 expandtab shiftwidth=4 smarttab
 set noshiftround
 
 " ================================================== Searching ==================================================
@@ -179,9 +177,9 @@ inoremap <Tab> <C-R>=Tab_Or_Complete()<CR>
 set foldmethod=manual       " manual fold
 
 " ================================================== NERDtree ====================================================
-nnoremap <leader>nt :NERDTreeToggle<cr>
-let g:NERDTreeDirArrowExpandable = '▸'
-let g:NERDTreeDirArrowCollapsible = '▾'
+" nnoremap <leader>nt :NERDTreeToggle<cr>
+" let g:NERDTreeDirArrowExpandable = '▸'
+" let g:NERDTreeDirArrowCollapsible = '▾'
 
 
 " ================================================= Auto commenting =================================================
@@ -213,23 +211,23 @@ let s:comment_map = {
     \ }
 
 function! ToggleComment()
-    if has_key(s:comment_map, &filetype)
-        let comment_leader = s:comment_map[&filetype]
-        if getline('.') =~ "^\\s*" . comment_leader . " " 
-            " Uncomment the line
-            execute "silent s/^\\(\\s*\\)" . comment_leader . " /\\1/"
-        else 
-            if getline('.') =~ "^\\s*" . comment_leader
-                " Uncomment the line
-                execute "silent s/^\\(\\s*\\)" . comment_leader . "/\\1/"
-            else
-                " Comment the line
-                execute "silent s/^\\(\\s*\\)/\\1" . comment_leader . " /"
-            end
-        end
-    else
-        echo "No comment leader found for filetype"
+  if has_key(s:comment_map, &filetype)
+    let comment_leader = s:comment_map[&filetype]
+    if getline('.') =~ "^\\s*" . comment_leader . " " 
+      " Uncomment the line
+      execute "silent s/^\\(\\s*\\)" . comment_leader . " /\\1/"
+    else 
+      if getline('.') =~ "^\\s*" . comment_leader
+        " Uncomment the line
+        execute "silent s/^\\(\\s*\\)" . comment_leader . "/\\1/"
+      else
+        " Comment the line
+        execute "silent s/^\\(\\s*\\)/\\1" . comment_leader . " /"
+      end
     end
+  else
+    echo "No comment leader found for filetype"
+  end
 endfunction
 
 
