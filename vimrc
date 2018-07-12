@@ -2,72 +2,84 @@ set nocompatible                " vi compatible is LAME
 
 " Only do this part when compiled with support for autocommands.
 if has("autocmd")
-  "Set UTF-8 as the default encoding for commit messages
-  autocmd BufReadPre COMMIT_EDITMSG,MERGE_MSG,git-rebase-todo setlocal fileencodings=utf-8
+    "Set UTF-8 as the default encoding for commit messages
+    autocmd BufReadPre COMMIT_EDITMSG,MERGE_MSG,git-rebase-todo setlocal fileencodings=utf-8
 
-  "Remember the positions in files with some git-specific exceptions"
-  autocmd BufReadPost *
-        \ if line("'\"") > 0 && line("'\"") <= line("$")
-        \           && expand("%") !~ "COMMIT_EDITMSG"
-        \           && expand("%") !~ "MERGE_EDITMSG"
-        \           && expand("%") !~ "ADD_EDIT.patch"
-        \           && expand("%") !~ "addp-hunk-edit.diff"
-        \           && expand("%") !~ "git-rebase-todo" |
-        \   exe "normal g`\"" |
-        \ endif
+    "Remember the positions in files with some git-specific exceptions"
+    autocmd BufReadPost *
+                \ if line("'\"") > 0 && line("'\"") <= line("$")
+                \           && expand("%") !~ "COMMIT_EDITMSG"
+                \           && expand("%") !~ "MERGE_EDITMSG"
+                \           && expand("%") !~ "ADD_EDIT.patch"
+                \           && expand("%") !~ "addp-hunk-edit.diff"
+                \           && expand("%") !~ "git-rebase-todo" |
+                \   exe "normal g`\"" |
+                \ endif
 
-  autocmd BufNewFile,BufRead *.patch set filetype=diff
-  autocmd BufNewFile,BufRead *.diff set filetype=diff
+    autocmd BufNewFile,BufRead *.patch set filetype=diff
+    autocmd BufNewFile,BufRead *.diff set filetype=diff
 
-  autocmd Syntax diff
-        \ highlight WhiteSpaceEOL ctermbg=red |
-        \ match WhiteSpaceEOL /\(^+.*\)\@<=\s\+$/
+    autocmd Syntax diff
+                \ highlight WhiteSpaceEOL ctermbg=red |
+                \ match WhiteSpaceEOL /\(^+.*\)\@<=\s\+$/
 
-  autocmd Syntax gitcommit setlocal textwidth=74
+    autocmd Syntax gitcommit setlocal textwidth=74
 
 
-  " =============================================== Commands for vim surround ================================================
-  augroup vim_surround
-    autocmd!
+    " =============================================== Commands for vim surround ================================================
+    augroup vim_surround
+        autocmd!
 
-    " Map change surrounding to <leader>cs and eliminate the cs command
-    autocmd VimEnter * nmap <leader>cs cs " Map change surrounding to <leader>cs and eliminate the cs command
+        " Map change surrounding to <leader>cs and eliminate the cs command
+        autocmd VimEnter * nmap <leader>cs cs " Map change surrounding to <leader>cs and eliminate the cs command
 
-    " Map delete surrounding to <leader>ds and eliminate the ds command
-    autocmd VimEnter * nmap <leader>ds ds
+        " Map delete surrounding to <leader>ds and eliminate the ds command
+        autocmd VimEnter * nmap <leader>ds ds
 
-    " Map add surrounding to <leader>as and eliminate ysiw
-    autocmd VimEnter * nmap <leader>as ysiw
+        " Map add surrounding to <leader>as and eliminate ysiw
+        autocmd VimEnter * nmap <leader>as ysiw
 
-    " Map surround line to <leader>sl and eliminate yss
-    autocmd VimEnter * nmap <leader>sl yss
+        " Map surround line to <leader>sl and eliminate yss
+        autocmd VimEnter * nmap <leader>sl yss
 
-    " Map surround selection to <leader>s and eliminate S
-    autocmd VimEnter * imap <leader>s S
+        " Map surround selection to <leader>s and eliminate S
+        autocmd VimEnter * imap <leader>s S
 
-    " Close vim if the only window left open is a NERDTree?
-    " autocmd bufenter * if (winnr("$") == 1 && exists("b:NERDTree") && b:NERDTree.isTabTree()) | q | endif
-  augroup END
+        " Close vim if the only window left open is a NERDTree?
+        " autocmd bufenter * if (winnr("$") == 1 && exists("b:NERDTree") && b:NERDTree.isTabTree()) | q | endif
+    augroup END
 
 endif "has("autocmd")
 
 
 
 " ================================================= Plugins ================================================= 
-call plug#begin('$VIM/vim80/plugin')
-  " Declare list of plugins
-  Plug 'junegunn/vim-emoji'
-  Plug 'tpope/vim-surround'
-  Plug 'tpope/vim-repeat'
-  " Plug 'sirver/ultisnips'
-  " Plug 'scrooloose/nerdtree'
-  " List ends here. Plugins become visible to VIM
-call plug#end()
+if !empty(globpath($rtp, '$VIM/vim80/plugin'))
+    call plug#begin('$VIM/vim80/plugin')
+    " Declare list of plugins
+    Plug 'junegunn/vim-emoji'
+    Plug 'tpope/vim-surround'
+    Plug 'tpope/vim-repeat'
+    " Plug 'sirver/ultisnips'
+    " Plug 'scrooloose/nerdtree'
+    " List ends here. Plugins become visible to VIM
+    call plug#end()
+else
+    call plug#begin('$VIM/vim74/plugin')
+    " Declare list of plugins
+    Plug 'junegunn/vim-emoji'
+    Plug 'tpope/vim-surround'
+    Plug 'tpope/vim-repeat'
+    " Plug 'sirver/ultisnips'
+    " Plug 'scrooloose/nerdtree'
+    " List ends here. Plugins become visible to VIM
+    call plug#end()
+endif
 
 set completefunc=emoji#complete
 
 function ReplaceWithEmoji()
-  %s/:\([^:]\+\):/\=emoji#for(submatch(1), submatch(0))/g
+    %s/:\([^:]\+\):/\=emoji#for(submatch(1), submatch(0))/g
 endfunction
 
 " ================================================== User defined mappings ==================================================
@@ -164,11 +176,11 @@ set timeoutlen=500              " how long it wait for mapped commands
 
 " ================================================ Use TAB to autocomplete ================================================ 
 function! Tab_Or_Complete()
-  if col('.')>1 && strpart( getline('.'), col('.')-2, 3 ) =~ '^\w'
-    return "\<C-N>"
-  else
-    return "\<Tab>"
-  endif
+    if col('.')>1 && strpart( getline('.'), col('.')-2, 3 ) =~ '^\w'
+        return "\<C-N>"
+    else
+        return "\<Tab>"
+    endif
 endfunction
 
 inoremap <Tab> <C-R>=Tab_Or_Complete()<CR>
@@ -184,50 +196,50 @@ set foldmethod=manual       " manual fold
 
 " ================================================= Auto commenting =================================================
 let s:comment_map = { 
-    \   "c": '\/\/\ ',
-    \   "cpp": '\/\/\ ',
-    \   "go": '\/\/\ ',
-    \   "java": '\/\/\ ',
-    \   "javascript": '\/\/\ ',
-    \   "lua": '--',
-    \   "scala": '\/\/\ ',
-    \   "php": '\/\/\ ',
-    \   "python": '#\ ',
-    \   "ruby": '#\ ',
-    \   "rust": '\/\/',
-    \   "sh": '#',
-    \   "desktop": '#',
-    \   "fstab": '#',
-    \   "conf": '#',
-    \   "profile": '#',
-    \   "bashrc": '#',
-    \   "bash_profile": '#',
-    \   "mail": '>',
-    \   "eml": '>',
-    \   "bat": 'REM',
-    \   "ahk": ';',
-    \   "vim": '"',
-    \   "tex": '%',
-    \ }
+            \   "c": '\/\/\ ',
+            \   "cpp": '\/\/\ ',
+            \   "go": '\/\/\ ',
+            \   "java": '\/\/\ ',
+            \   "javascript": '\/\/\ ',
+            \   "lua": '--',
+            \   "scala": '\/\/\ ',
+            \   "php": '\/\/\ ',
+            \   "python": '#\ ',
+            \   "ruby": '#\ ',
+            \   "rust": '\/\/',
+            \   "sh": '#',
+            \   "desktop": '#',
+            \   "fstab": '#',
+            \   "conf": '#',
+            \   "profile": '#',
+            \   "bashrc": '#',
+            \   "bash_profile": '#',
+            \   "mail": '>',
+            \   "eml": '>',
+            \   "bat": 'REM',
+            \   "ahk": ';',
+            \   "vim": '"',
+            \   "tex": '%',
+            \ }
 
 function! ToggleComment()
-  if has_key(s:comment_map, &filetype)
-    let comment_leader = s:comment_map[&filetype]
-    if getline('.') =~ "^\\s*" . comment_leader . " " 
-      " Uncomment the line
-      execute "silent s/^\\(\\s*\\)" . comment_leader . " /\\1/"
-    else 
-      if getline('.') =~ "^\\s*" . comment_leader
-        " Uncomment the line
-        execute "silent s/^\\(\\s*\\)" . comment_leader . "/\\1/"
-      else
-        " Comment the line
-        execute "silent s/^\\(\\s*\\)/\\1" . comment_leader . " /"
-      end
+    if has_key(s:comment_map, &filetype)
+        let comment_leader = s:comment_map[&filetype]
+        if getline('.') =~ "^\\s*" . comment_leader . " " 
+            " Uncomment the line
+            execute "silent s/^\\(\\s*\\)" . comment_leader . " /\\1/"
+        else 
+            if getline('.') =~ "^\\s*" . comment_leader
+                " Uncomment the line
+                execute "silent s/^\\(\\s*\\)" . comment_leader . "/\\1/"
+            else
+                " Comment the line
+                execute "silent s/^\\(\\s*\\)/\\1" . comment_leader . " /"
+            end
+        end
+    else
+        echo "No comment leader found for filetype"
     end
-  else
-    echo "No comment leader found for filetype"
-  end
 endfunction
 
 
