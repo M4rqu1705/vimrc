@@ -2,8 +2,6 @@ set nocompatible                " vi compatible is LAME
 
 " Only do this part when compiled with support for autocommands.
 if has("autocmd")
-    "Set UTF-8 as the default encoding for commit messages
-    autocmd BufReadPre COMMIT_EDITMSG,MERGE_MSG,git-rebase-todo setlocal fileencodings=utf-8
 
     "Remember the positions in files with some git-specific exceptions"
     autocmd BufReadPost *
@@ -51,30 +49,16 @@ if has("autocmd")
 
 endif "has("autocmd")
 
-
-
 " ================================================= Plugins ================================================= 
-if !empty(globpath($rtp, '$VIM/vim80/plugin'))
-    call plug#begin('$VIM/vim80/plugin')
-    " Declare list of plugins
-    Plug 'junegunn/vim-emoji'
-    Plug 'tpope/vim-surround'
-    Plug 'tpope/vim-repeat'
-    " Plug 'sirver/ultisnips'
-    " Plug 'scrooloose/nerdtree'
-    " List ends here. Plugins become visible to VIM
-    call plug#end()
-else
-    call plug#begin('$VIM/vim74/plugin')
-    " Declare list of plugins
-    Plug 'junegunn/vim-emoji'
-    Plug 'tpope/vim-surround'
-    Plug 'tpope/vim-repeat'
-    " Plug 'sirver/ultisnips'
-    " Plug 'scrooloose/nerdtree'
-    " List ends here. Plugins become visible to VIM
-    call plug#end()
-endif
+call plug#begin('$VIM/vim80/plugin')
+" Declare list of plugins
+Plug 'junegunn/vim-emoji'
+Plug 'tpope/vim-surround'
+Plug 'tpope/vim-repeat'
+" Plug 'sirver/ultisnips'
+" Plug 'scrooloose/nerdtree'
+" List ends here. Plugins become visible to VIM
+call plug#end()
 
 set completefunc=emoji#complete
 
@@ -83,7 +67,6 @@ function ReplaceWithEmoji()
 endfunction
 
 " ================================================== User defined mappings ==================================================
-
 
 " Make ',' leader for commands
 let mapleader = ","
@@ -103,14 +86,11 @@ nnoremap <leader>j <c-d>
 " <leader>u toggles the case of the current word
 nnoremap <leader>u Bviw~<space><esc>
 
-" <leader>U toggles the case of the current WORD
-nnoremap <leader>U BviW~<space><esc>
-
 " Big jump left (to first non-blank character)
 nnoremap <leader>h g^<space>
 
 " Big jump right (to last non-blank character)
-nnoremap <leader>l g_<cr>
+nnoremap <leader>l g_
 
 " Remap ev to edit vimrc file
 nnoremap <leader>ev :tabedit /c/Program\ Files/Git/etc/vimrc<cr>
@@ -125,12 +105,23 @@ set viminfo='999,<50,s10,h,%,/0,:99,@99
 " ================================================== Dictionaries ==================================================
 set spell spelllang=en,es
 set dictionary="$VIM/vim80/spell"
-" For making everything utf-8
-set enc=utf-8
+" For making everything UTF-8
+" set encoding = utf-8
+" set fileencodings = utf-8
+
+if has("multi_byte")
+  if &termencoding == ""
+    let &termencoding = &encoding
+  endif
+  set encoding=utf-8
+  setglobal fileencoding=utf-8
+  "setglobal bomb
+  set fileencodings=ucs-bom,utf-8,latin1
+endif
 
 " ================================================== Interface ================================================== 
 set number                      " Add line numbers
-set numberwidth=4               " Set line number width
+set numberwidth=5               " Set line number width
 set showmode                    " show the current mode
 set title
 syntax on                       " turn syntax highlighting on by default
