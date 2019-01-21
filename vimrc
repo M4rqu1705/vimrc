@@ -23,8 +23,30 @@ if has("autocmd")
 
     autocmd Syntax gitcommit setlocal textwidth=74
 
+endif "has("autocmd")
 
-    " =============================================== Commands for vim surround ================================================
+" ================================================= Plugins ================================================= 
+call plug#begin('$VIM/vim81/plugin')
+" Declare list of plugins
+Plug 'junegunn/vim-emoji'
+Plug 'tpope/vim-surround'
+Plug 'tpope/vim-repeat'
+Plug 'scrooloose/nerdtree'
+Plug 'ErichDonGubler/vim-sublime-monokai'
+" Plug 'sirver/ultisnips'
+" List ends here. Plugins become visible to VIM
+call plug#end()
+
+" ================================================== Vim Emoji ====================================================
+set completefunc=emoji#complete
+
+function ReplaceWithEmoji()
+    %s/:\([^:]\+\):/\=emoji#for(submatch(1), submatch(0))/g
+endfunction
+
+
+" ================================================== Vim Surround ====================================================
+if has("autocmd")
     augroup vim_surround
         autocmd!
 
@@ -35,36 +57,28 @@ if has("autocmd")
         autocmd VimEnter * nmap <leader>ds ds
 
         " Map add surrounding to <leader>as and eliminate ysiw
-        autocmd VimEnter * nmap <leader>as ysiw
+        autocmd VimEnter * nmap <leader>as ys
 
         " Map surround line to <leader>sl and eliminate yss
         autocmd VimEnter * nmap <leader>sl yss
 
         " Map surround selection to <leader>s and eliminate S
         autocmd VimEnter * imap <leader>s S
-
-        " Close vim if the only window left open is a NERDTree?
-        " autocmd bufenter * if (winnr("$") == 1 && exists("b:NERDTree") && b:NERDTree.isTabTree()) | q | endif
     augroup END
 
 endif "has("autocmd")
 
-" ================================================= Plugins ================================================= 
-call plug#begin('$VIM/vim80/plugin')
-" Declare list of plugins
-Plug 'junegunn/vim-emoji'
-Plug 'tpope/vim-surround'
-Plug 'tpope/vim-repeat'
-" Plug 'sirver/ultisnips'
-" Plug 'scrooloose/nerdtree'
-" List ends here. Plugins become visible to VIM
-call plug#end()
+" ================================================== NERDtree ====================================================
+if has("autocmd")
+    " Close vim if the only window left open is a NERDTree?
+    autocmd bufenter * if (winnr("$") == 1 && exists("b:NERDTree") && b:NERDTree.isTabTree()) | q | endif
+endif "has("autocmd")
 
-set completefunc=emoji#complete
+nnoremap <leader>nt :NERDTreeToggle<cr>
+let g:NERDTreeDirArrowExpandable = '▸'
+let g:NERDTreeDirArrowCollapsible = '▾'
 
-function ReplaceWithEmoji()
-    %s/:\([^:]\+\):/\=emoji#for(submatch(1), submatch(0))/g
-endfunction
+
 
 " ================================================== User defined mappings ==================================================
 
@@ -93,10 +107,59 @@ nnoremap <leader>h g^<space>
 nnoremap <leader>l g_
 
 " Remap ev to edit vimrc file
-nnoremap <leader>ev :tabedit /c/Program\ Files/Git/etc/vimrc<cr>
+nnoremap <leader>ev :tabedit /c/Users/m4rc0/AppData/Local/Programs/cmder/vendor/git-for-windows/etc/vimrc<cr>
 
 " Remap sv to "refresh" vimrc
-nnoremap <leader>sv :source /c/Program\ Files/Git/etc/vimrc<cr>
+nnoremap <leader>sv :source /c/Users/m4rc0/AppData/Local/Programs/cmder/vendor/git-for-windows/etc/vimrc<cr>
+
+" Remap Ctrl+W for use in Cmder
+nnoremap <c-w> <c-s-w>
+
+" ================================================== Abbreviations ==================================================
+" HTML files
+func Eatchar(pat)
+  let c = nr2char(getchar(0))
+  return (c =~ a:pat) ? '' : c
+endfunc
+
+if has("autocmd")
+
+    " HTML tag
+    autocmd BufRead,BufNewFile *.html iabbrev <silent> <html> <html><cr><cr></html><up><left><left><left><left>
+
+    " Head tag
+    autocmd BufRead,BufNewFile *.html iabbrev <silent> <head> <head><cr><cr></head><up><left><left><left><left>
+    
+    " Meta tag
+    autocmd BufRead,BufNewFile *.html iabbrev <silent> <meta> <meta name="" content=""/><left><left><left><left><left><left><left><left><left><left><left><left><left><left><c-r>=Eatchar('\s')<cr>
+
+    " Title tag
+    autocmd BufRead,BufNewFile *.html iabbrev <silent> <title> <title></title><left><left><left><left><left><left><left><left><c-r>=Eatchar('\s')<cr>
+
+    " Body tag
+    autocmd BufRead,BufNewFile *.html iabbrev <silent> <body> <body><cr><cr></body><up><left><left><left><left>
+
+    " Parragraph tag
+    autocmd BufRead,BufNewFile *.html iabbrev <silent> <p> <p></p><left><left><left><left><c-r>=Eatchar('\s')<cr>
+
+    " Anchor tag
+    autocmd BufRead,BufNewFile *.html iabbrev <silent> <a> <a href="#"></a><left><left><left><left><c-r>=Eatchar('\s')<cr>
+
+    " Image tag
+    autocmd BufRead,BufNewFile *.html iabbrev <silent> <img> <img src="" alt=""/><left><left><left><left><left><left><left><left><left><left><c-r>=Eatchar('\s')<cr>
+
+    " Table tag
+    autocmd BufRead,BufNewFile *.html iabbrev <silent> <table> <table><cr><cr></table><up><left><left><left><left><left>
+
+    " Break line tag
+    autocmd BufRead,BufNewFile *.html iabbrev <silent> <br> <br/><c-r>=Eatchar('\s')<cr>
+
+    " Horizontal rule tag
+    autocmd BufRead,BufNewFile *.html iabbrev <silent> <hr> <hr/><c-r>=Eatchar('\s')<cr>
+
+" http://triin.net/2006/06/12/html AND https://www.w3schools.com/tags/default.asp
+
+endif "has("autocmd")
 
 " ================================================== Buffers ==================================================
 set hidden
@@ -104,19 +167,19 @@ set viminfo='999,<50,s10,h,%,/0,:99,@99
 
 " ================================================== Dictionaries ==================================================
 set spell spelllang=en,es
-set dictionary="$VIM/vim80/spell"
+set dictionary="$VIM/vim81/spell"
 " For making everything UTF-8
 " set encoding = utf-8
 " set fileencodings = utf-8
 
 if has("multi_byte")
-  if &termencoding == ""
-    let &termencoding = &encoding
-  endif
-  set encoding=utf-8
-  setglobal fileencoding=utf-8
-  "setglobal bomb
-  set fileencodings=ucs-bom,utf-8,latin1
+    if &termencoding == ""
+        let &termencoding = &encoding
+    endif
+    set encoding=utf-8
+    setglobal fileencoding=utf-8
+    "setglobal bomb
+    set fileencodings=ucs-bom,utf-8,latin1
 endif
 
 " ================================================== Interface ================================================== 
@@ -131,6 +194,7 @@ set background=dark             " Use colours that work well on a dark backgroun
 set clipboard=unnamed           " set clipboard to unnamed to access the system clipboard under windows
 " Show EOL type and last modified timestamp, right after the filename
 set statusline=%<%F%h%m%r\ [%{&ff}]\ (%{strftime(\"%H:%M\ %d/%m/%Y\",getftime(expand(\"%:p\")))})%=%l,%c%V\ %P
+colorscheme sublimemonokai
 
 " ================================================== Whitespace ==================================================
 set ai                          " set auto-indenting on for programming
@@ -146,7 +210,6 @@ set tabstop=8 softtabstop=0 expandtab shiftwidth=4 smarttab
 set noshiftround
 
 " ================================================== Searching ==================================================
-set hlsearch
 set incsearch
 set ignorecase smartcase
 set showmatch                   " automatically show matching brackets. works like it does in bbedit.
@@ -163,7 +226,7 @@ set noswapfile
 
 " ================================================== Keys ==================================================
 set backspace=indent,eol,start  " allow backspacing over everything.
-set timeoutlen=500              " how long it wait for mapped commands
+set timeoutlen=1000              " how long it wait for mapped commands
 
 " ================================================ Use TAB to autocomplete ================================================ 
 function! Tab_Or_Complete()
@@ -178,12 +241,6 @@ inoremap <Tab> <C-R>=Tab_Or_Complete()<CR>
 
 " ================================================== Code folding ==================================================
 set foldmethod=manual       " manual fold
-
-" ================================================== NERDtree ====================================================
-" nnoremap <leader>nt :NERDTreeToggle<cr>
-" let g:NERDTreeDirArrowExpandable = '▸'
-" let g:NERDTreeDirArrowCollapsible = '▾'
-
 
 " ================================================= Auto commenting =================================================
 let s:comment_map = { 
@@ -232,7 +289,6 @@ function! ToggleComment()
         echo "No comment leader found for filetype"
     end
 endfunction
-
 
 nnoremap <leader>cc :call ToggleComment()<cr>
 vnoremap <leader>C :call ToggleComment()<cr>
