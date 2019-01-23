@@ -23,62 +23,7 @@ if has("autocmd")
 
     autocmd Syntax gitcommit setlocal textwidth=74
 
-endif "has("autocmd")
-
-" ================================================= Plugins ================================================= 
-call plug#begin('$VIM/vim81/plugin')
-" Declare list of plugins
-Plug 'junegunn/vim-emoji'
-Plug 'tpope/vim-surround'
-Plug 'tpope/vim-repeat'
-Plug 'scrooloose/nerdtree'
-Plug 'ErichDonGubler/vim-sublime-monokai'
-" Plug 'sirver/ultisnips'
-" List ends here. Plugins become visible to VIM
-call plug#end()
-
-" ================================================== Vim Emoji ====================================================
-set completefunc=emoji#complete
-
-function ReplaceWithEmoji()
-    %s/:\([^:]\+\):/\=emoji#for(submatch(1), submatch(0))/g
-endfunction
-
-
-" ================================================== Vim Surround ====================================================
-if has("autocmd")
-    augroup vim_surround
-        autocmd!
-
-        " Map change surrounding to <leader>cs and eliminate the cs command
-        autocmd VimEnter * nmap <leader>cs cs " Map change surrounding to <leader>cs and eliminate the cs command
-
-        " Map delete surrounding to <leader>ds and eliminate the ds command
-        autocmd VimEnter * nmap <leader>ds ds
-
-        " Map add surrounding to <leader>as and eliminate ysiw
-        autocmd VimEnter * nmap <leader>as ys
-
-        " Map surround line to <leader>sl and eliminate yss
-        autocmd VimEnter * nmap <leader>sl yss
-
-        " Map surround selection to <leader>s and eliminate S
-        autocmd VimEnter * imap <leader>s S
-    augroup END
-
-endif "has("autocmd")
-
-" ================================================== NERDtree ====================================================
-if has("autocmd")
-    " Close vim if the only window left open is a NERDTree?
-    autocmd bufenter * if (winnr("$") == 1 && exists("b:NERDTree") && b:NERDTree.isTabTree()) | q | endif
-endif "has("autocmd")
-
-nnoremap <leader>nt :NERDTreeToggle<cr>
-let g:NERDTreeDirArrowExpandable = '▸'
-let g:NERDTreeDirArrowCollapsible = '▾'
-
-
+endif
 
 " ================================================== User defined mappings ==================================================
 
@@ -115,6 +60,68 @@ nnoremap <leader>sv :source /c/Users/m4rc0/AppData/Local/Programs/cmder/vendor/g
 " Remap Ctrl+W for use in Cmder
 nnoremap <c-w> <c-s-w>
 
+" ================================================= Plugins ================================================= 
+call plug#begin('$VIM/vim81/plugin')
+" Declare list of plugins
+Plug 'tpope/vim-surround'
+Plug 'scrooloose/nerdtree'
+Plug 'mattn/emmet-vim'
+Plug 'tpope/vim-repeat'
+Plug 'junegunn/vim-emoji'
+Plug 'ErichDonGubler/vim-sublime-monokai'
+" Plug 'sirver/ultisnips'
+" List ends here. Plugins become visible to VIM
+call plug#end()
+
+" ================================================== Vim Emoji ====================================================
+set completefunc=emoji#complete
+
+function ReplaceWithEmoji()
+    %s/:\([^:]\+\):/\=emoji#for(submatch(1), submatch(0))/g
+endfunction
+
+
+" ================================================== Vim Surround ====================================================
+if has("autocmd")
+    augroup vim_surround
+        autocmd!
+
+        " Map change surrounding to <leader>cs and eliminate the cs command
+        autocmd VimEnter * nmap <leader>cs cs " Map change surrounding to <leader>cs and eliminate the cs command
+
+        " Map delete surrounding to <leader>ds and eliminate the ds command
+        autocmd VimEnter * nmap <leader>ds ds
+
+        " Map add surrounding to <leader>as and eliminate ysiw
+        autocmd VimEnter * nmap <leader>as ys
+
+        " Map surround line to <leader>sl and eliminate yss
+        autocmd VimEnter * nmap <leader>sl yss
+
+        " Map surround selection to <leader>s and eliminate S
+        autocmd VimEnter * imap <leader>s S
+    augroup END
+
+endif
+
+" ================================================== NERDtree ====================================================
+if has("autocmd")
+    " Close vim if the only window left open is a NERDTree?
+    autocmd bufenter * if (winnr("$") == 1 && exists("b:NERDTree") && b:NERDTree.isTabTree()) | q | endif
+endif "has("autocmd")
+
+nnoremap <leader>pnt :NERDTreeToggle<cr>
+
+" let g:NERDTreeDirArrowExpandable = '→'
+" let g:NERDTreeDirArrowCollapsible = '↓'
+let g:NERDTreeDirArrows=0
+
+" ================================================== Emmet ====================================================
+let g:user_emmet_install_global = 0
+autocmd FileType html,css EmmetInstall
+let g:user_emmet_mode='n'    "only enable normal mode functions.
+let g:user_emmet_leader_key= ',e'
+
 " ================================================== Abbreviations ==================================================
 " HTML files
 func Eatchar(pat)
@@ -125,7 +132,7 @@ endfunc
 if has("autocmd")
 
     " HTML tag
-    autocmd BufRead,BufNewFile *.html iabbrev <silent> <html> <html><cr><cr></html><up><left><left><left><left>
+    autocmd BufRead,BufNewFile *.html iabbrev <silent> <html> <html><cr><cr></html><up><left><left><left><c-r>=Eatchar('\s')<cr>
 
     " Head tag
     autocmd BufRead,BufNewFile *.html iabbrev <silent> <head> <head><cr><cr></head><up><left><left><left><left>
@@ -136,10 +143,13 @@ if has("autocmd")
     " Title tag
     autocmd BufRead,BufNewFile *.html iabbrev <silent> <title> <title></title><left><left><left><left><left><left><left><left><c-r>=Eatchar('\s')<cr>
 
+    " Style tag
+    autocmd BufRead,BufNewFile *.html iabbrev <silent> <style> <style type="text/css"><cr><cr></style><up><left><left><left><left>
+
     " Body tag
     autocmd BufRead,BufNewFile *.html iabbrev <silent> <body> <body><cr><cr></body><up><left><left><left><left>
 
-    " Parragraph tag
+    " Paragraph tag
     autocmd BufRead,BufNewFile *.html iabbrev <silent> <p> <p></p><left><left><left><left><c-r>=Eatchar('\s')<cr>
 
     " Anchor tag
@@ -148,18 +158,93 @@ if has("autocmd")
     " Image tag
     autocmd BufRead,BufNewFile *.html iabbrev <silent> <img> <img src="" alt=""/><left><left><left><left><left><left><left><left><left><left><c-r>=Eatchar('\s')<cr>
 
-    " Table tag
-    autocmd BufRead,BufNewFile *.html iabbrev <silent> <table> <table><cr><cr></table><up><left><left><left><left><left>
-
     " Break line tag
     autocmd BufRead,BufNewFile *.html iabbrev <silent> <br> <br/><c-r>=Eatchar('\s')<cr>
 
     " Horizontal rule tag
     autocmd BufRead,BufNewFile *.html iabbrev <silent> <hr> <hr/><c-r>=Eatchar('\s')<cr>
 
+    " Heading tags
+    autocmd BufRead,BufNewFile *.html iabbrev <silent> <h1> <h1></h1><left><left><left><left><left><c-r>=Eatchar('\s')<cr>
+    autocmd BufRead,BufNewFile *.html iabbrev <silent> <h2> <h2></h2><left><left><left><left><left><c-r>=Eatchar('\s')<cr>
+    autocmd BufRead,BufNewFile *.html iabbrev <silent> <h3> <h3></h3><left><left><left><left><left><c-r>=Eatchar('\s')<cr>
+    autocmd BufRead,BufNewFile *.html iabbrev <silent> <h4> <h4></h4><left><left><left><left><left><c-r>=Eatchar('\s')<cr>
+    autocmd BufRead,BufNewFile *.html iabbrev <silent> <h5> <h5></h5><left><left><left><left><left><c-r>=Eatchar('\s')<cr>
+    autocmd BufRead,BufNewFile *.html iabbrev <silent> <h6> <h6></h6><left><left><left><left><left><c-r>=Eatchar('\s')<cr>
+
+    " Table tag
+    autocmd BufRead,BufNewFile *.html iabbrev <silent> <table> <table><cr><cr></table><up><left><left><left><left><left>
+
+    " Table Head tag
+    autocmd BufRead,BufNewFile *.html iabbrev <silent> <thead> <thead><cr><cr></thead><up><left><left><left><left><left>
+
+    " Table header tag
+    autocmd BufRead,BufNewFile *.html iabbrev <silent> <th> <th></th><left><left><left><left><left><c-r>=Eatchar('\s')<cr>
+
+    " Table row tag
+    autocmd BufRead,BufNewFile *.html iabbrev <silent> <tr> <tr><cr><cr></tr><up><left><left>
+
+    " Table Body tag
+    autocmd BufRead,BufNewFile *.html iabbrev <silent> <tbody> <tbody><cr><cr></tbody><up><left><left><left><left><left>
+
+    " Table data tag
+    autocmd BufRead,BufNewFile *.html iabbrev <silent> <td> <td></td><left><left><left><left><left><c-r>=Eatchar('\s')<cr>
+
+    " JavaScript tag
+    " autocmd BufRead,BufNewFile *.html iabbrev <silent> <script> <script><cr><cr></script><up><left><left><left><left><left><left>
+
+    " No JavaScript tag
+    autocmd BufRead,BufNewFile *.html iabbrev <silent> <noscript> <noscript><cr><cr><noscript><up><left><left><left><left><left><left><left><left>
+
+    " Div tag
+    autocmd BufRead,BufNewFile *.html iabbrev <silent> <div> <div><cr><cr></div><up><left><left><left>
+
+    " Span tag
+    autocmd BufRead,BufNewFile *.html iabbrev <silent> <span> <span></span><left><left><left><left><left><left><left><c-r>=Eatchar('\s')<cr>
+
+    " Input tag
+    autocmd BufRead,BufNewFile *.html iabbrev <silent> <input> <input type="" name="" placeholder=""/><left><left><left><left><left><left><left><left><left><left><left><left><left><left><left><left><left><left><left><left><left><left><left><left><left><left><c-r>=Eatchar('\s')<cr>
+
+    " Label tag
+    autocmd BufRead,BufNewFile *.html iabbrev <silent> <label> <label></label><left><left><left><left><left><left><left><left><c-r>=Eatchar('\s')<cr>
+
+    " Select tag
+    autocmd BufRead,BufNewFile *.html iabbrev <silent> <select> <select name=""><cr><cr></select><up><left><left><left><left><left><left>
+
+    " Option tag
+    autocmd BufRead,BufNewFile *.html iabbrev <silent> <option> <option value=""></option><left><left><left><left><left><left><left><left><left><c-r>=Eatchar('\s')<cr>
+
+    " Button tag
+    autocmd BufRead,BufNewFile *.html iabbrev <silent> <button> <button></button><left><left><left><left><left><left><left><left><left><c-r>=Eatchar('\s')<cr>
+
+    " Text area tag
+    autocmd BufRead,BufNewFile *.html iabbrev <silent> <textarea> <textarea><cr><cr></textarea><up><left><left><left><left><left><left><left><left>
+
+    " Comment tag
+    autocmd BufRead,BufNewFile *.html iabbrev <silent> <!-- <!-- --><left><left><left><left>
+
+    " Header tag
+    autocmd BufRead,BufNewFile *.html iabbrev <silent> <header> <header><cr><cr></header><up><left><left><left><left><left><left>
+
+    " Nav tag
+    autocmd BufRead,BufNewFile *.html iabbrev <silent> <nav> <nav><cr><cr></nav><up><left><left><left>
+
+    " Article tag
+    autocmd BufRead,BufNewFile *.html iabbrev <silent> <article> <article><cr><cr></article><up><left><left><left><left><left><left><left>
+
+    " Section tag
+    autocmd BufRead,BufNewFile *.html iabbrev <silent> <section> <section><cr><cr></section><up><left><left><left><left><left><left><left>
+
+    " Aside tag
+    autocmd BufRead,BufNewFile *.html iabbrev <silent> <aside> <aside><cr><cr></aside><up><left><left><left><left><left>
+
+    " Footer tag
+    autocmd BufRead,BufNewFile *.html iabbrev <silent> <footer> <footer><cr><cr></footer><up><left><left><left><left><left><left>
+
+
 " http://triin.net/2006/06/12/html AND https://www.w3schools.com/tags/default.asp
 
-endif "has("autocmd")
+endif
 
 " ================================================== Buffers ==================================================
 set hidden
@@ -190,7 +275,7 @@ set title
 syntax on                       " turn syntax highlighting on by default
 set vb                          " turn on the "visual bell" - which is much quieter than the "audio blink"
 set laststatus=2                " make the last line where the status is two lines deep so you can see status always
-set background=dark             " Use colours that work well on a dark background (Console is usually black)
+" set background=dark             " Use colours that work well on a dark background (Console is usually black)
 set clipboard=unnamed           " set clipboard to unnamed to access the system clipboard under windows
 " Show EOL type and last modified timestamp, right after the filename
 set statusline=%<%F%h%m%r\ [%{&ff}]\ (%{strftime(\"%H:%M\ %d/%m/%Y\",getftime(expand(\"%:p\")))})%=%l,%c%V\ %P
@@ -226,7 +311,7 @@ set noswapfile
 
 " ================================================== Keys ==================================================
 set backspace=indent,eol,start  " allow backspacing over everything.
-set timeoutlen=1000              " how long it wait for mapped commands
+set timeoutlen=2000              " how long it wait for mapped commands
 
 " ================================================ Use TAB to autocomplete ================================================ 
 function! Tab_Or_Complete()
