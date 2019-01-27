@@ -64,11 +64,9 @@ nnoremap <c-w> <c-s-w>
 call plug#begin('$VIM/vim81/plugin')
 " Declare list of plugins
 Plug 'tpope/vim-surround'
-Plug 'scrooloose/nerdtree'
 Plug 'mattn/emmet-vim'
 Plug 'tpope/vim-repeat'
 Plug 'junegunn/vim-emoji'
-Plug 'ErichDonGubler/vim-sublime-monokai'
 " Plug 'sirver/ultisnips'
 " List ends here. Plugins become visible to VIM
 call plug#end()
@@ -87,7 +85,7 @@ if has("autocmd")
         autocmd!
 
         " Map change surrounding to <leader>cs and eliminate the cs command
-        autocmd VimEnter * nmap <leader>cs cs " Map change surrounding to <leader>cs and eliminate the cs command
+        autocmd VimEnter * nmap <leader>cs cs 
 
         " Map delete surrounding to <leader>ds and eliminate the ds command
         autocmd VimEnter * nmap <leader>ds ds
@@ -104,147 +102,90 @@ if has("autocmd")
 
 endif
 
-" ================================================== NERDtree ====================================================
-if has("autocmd")
-    " Close vim if the only window left open is a NERDTree?
-    autocmd bufenter * if (winnr("$") == 1 && exists("b:NERDTree") && b:NERDTree.isTabTree()) | q | endif
-endif "has("autocmd")
-
-nnoremap <leader>pnt :NERDTreeToggle<cr>
-
-" let g:NERDTreeDirArrowExpandable = '→'
-" let g:NERDTreeDirArrowCollapsible = '↓'
-let g:NERDTreeDirArrows=0
-
 " ================================================== Emmet ====================================================
 let g:user_emmet_install_global = 0
 autocmd FileType html,css EmmetInstall
 let g:user_emmet_mode='n'    "only enable normal mode functions.
 let g:user_emmet_leader_key= ',e'
 
+" ================================================== Airline ====================================================
+" let g:airline#extensions#tabline#enabled = 1
+" let g:airline_theme='molokai'
+,
+" set ttimeoutlen=50
+
+
 " ================================================== Abbreviations ==================================================
-" HTML files
+
 func Eatchar(pat)
   let c = nr2char(getchar(0))
   return (c =~ a:pat) ? '' : c
 endfunc
 
-if has("autocmd")
+" Define the behavior of specific tags
+let s:tags_content = {
+    \ "meta": " name\=\"\"\ content\=\"\"/>",
+    \ "div": ">\<cr>\<tab>\<cr>\<bs>",
+    \ "html": " lang\=\"en\-US\">\<cr>\<tab>\<cr>\<bs>",
+    \ "img": " src\=\"\"\ alt\=\"\"/>",
+    \ "a": " href\=\"#\">",
+    \ "link": " rel\=\"stylesheet\" type\=\"text/css\" href=\"#\"/>",
+    \ "style": " type\=\"text/css\"\>",
+    \ "script": " type\=\"text/javascript\">",
+    \ "input": " name\=\"\" placeholder\=\"\"/>",
+    \ "select": " name\=\"\">",
+    \ "option": " value\=\"\">",
+    \ "metas": "\<bs> charset=\"UTF-8\"/>\<cr>\<cr><title></title>\<cr>\<cr><base href\=\"#\"/>\<cr>\<cr><link rel=\"stylesheet\" type=\"text/css\" href=\"#\"/>\<cr><link rel=\"shortcut icon\" type=\"image/x-icon\" href=\"#\" />\<cr>\<cr><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"/>\<cr><meta name=\"description\" content=\"\"/>\<cr><meta name=\"keywords\" content=\"\"/>\<cr><meta name=\"copyright\" content=\"\" />\<cr><meta name=\"author\" content=\"Author name\" />\<cr><meta http-equiv=\"cache-control\" content=\"no-cache\"/>\<cr><meta property=\"og\:type\" content=\"\"/>\<cr><meta property=\"og\:title\" content=\"\"/>\<cr><meta property=\"og\:description\" content=\"\"/>\<cr><meta property=\"og\:image\" content=\"\"/>\<cr><meta property=\"og\:site_name\" content=\"\"/>"
+    \ }
 
-    " HTML tag
-    autocmd BufRead,BufNewFile *.html iabbrev <silent> <html> <html><cr><cr></html><up><left><left><left><c-r>=Eatchar('\s')<cr>
+let s:self_closing_tags = {
+    \ "meta": "true",   "base": "true",
+    \ "link": "true",   "img": "true",
+    \ "br": "true",     "hr": "true",
+    \ "input": "true",  "source": "true",
+    \ "embed": "true",  "param": "true",
+    \ "wbr": "true",    "area": "true",
+    \ "col": "true",    "track": "true" ,
+    \ "metas": "true"}
 
-    " Head tag
-    autocmd BufRead,BufNewFile *.html iabbrev <silent> <head> <head><cr><cr></head><up><left><left><left><left>
+
+func AutoCompleteTag(mode)
+    " inoremap >> ><esc>T<"tyi>f>a</<c-r>t><esc>T>i<c-r>=Eatchar('\s')<cr>
+
+    " Identify how to retrieve the current tag to the 't' register
+    if a:mode ==# "n"
+        execute "normal! T<\"tyi<"
+    elseif a:mode ==# "v"
+        " execute "normal! \"ty"
+    else
+        echo "No mode detected"
+    endif
+
+    " Select the contents based on the tags_content dictionary
+    let l:tag_content = ">"
+    if has_key(s:tags_content, @t)
+        let l:tag_content = s:tags_content[@t]
+    endif
+
+    " Fill out the tags based on its content and type
+    if has_key(s:self_closing_tags, @t)
+        execute "normal! f>xa" . l:tag_content
+    else
+        execute "normal! f>xa" . l:tag_content . "</\<c-r>t>\<esc>F>"
+    endif
     
-    " Meta tag
-    autocmd BufRead,BufNewFile *.html iabbrev <silent> <meta> <meta name="" content=""/><left><left><left><left><left><left><left><left><left><left><left><left><left><left><c-r>=Eatchar('\s')<cr>
+    " If the tag has a newline character, assume it is a block element
+    "   move the cursor to the space provided
+    if join(split(l:tag_content, ''), '') =~? "kb"
+        execute "normal! \<esc>k"
+        return 'cc'
+    endif
 
-    " Title tag
-    autocmd BufRead,BufNewFile *.html iabbrev <silent> <title> <title></title><left><left><left><left><left><left><left><left><c-r>=Eatchar('\s')<cr>
+    return 'a'
 
-    " Style tag
-    autocmd BufRead,BufNewFile *.html iabbrev <silent> <style> <style type="text/css"><cr><cr></style><up><left><left><left><left>
+endfunc
 
-    " Body tag
-    autocmd BufRead,BufNewFile *.html iabbrev <silent> <body> <body><cr><cr></body><up><left><left><left><left>
-
-    " Paragraph tag
-    autocmd BufRead,BufNewFile *.html iabbrev <silent> <p> <p></p><left><left><left><left><c-r>=Eatchar('\s')<cr>
-
-    " Anchor tag
-    autocmd BufRead,BufNewFile *.html iabbrev <silent> <a> <a href="#"></a><left><left><left><left><c-r>=Eatchar('\s')<cr>
-
-    " Image tag
-    autocmd BufRead,BufNewFile *.html iabbrev <silent> <img> <img src="" alt=""/><left><left><left><left><left><left><left><left><left><left><c-r>=Eatchar('\s')<cr>
-
-    " Break line tag
-    autocmd BufRead,BufNewFile *.html iabbrev <silent> <br> <br/><c-r>=Eatchar('\s')<cr>
-
-    " Horizontal rule tag
-    autocmd BufRead,BufNewFile *.html iabbrev <silent> <hr> <hr/><c-r>=Eatchar('\s')<cr>
-
-    " Heading tags
-    autocmd BufRead,BufNewFile *.html iabbrev <silent> <h1> <h1></h1><left><left><left><left><left><c-r>=Eatchar('\s')<cr>
-    autocmd BufRead,BufNewFile *.html iabbrev <silent> <h2> <h2></h2><left><left><left><left><left><c-r>=Eatchar('\s')<cr>
-    autocmd BufRead,BufNewFile *.html iabbrev <silent> <h3> <h3></h3><left><left><left><left><left><c-r>=Eatchar('\s')<cr>
-    autocmd BufRead,BufNewFile *.html iabbrev <silent> <h4> <h4></h4><left><left><left><left><left><c-r>=Eatchar('\s')<cr>
-    autocmd BufRead,BufNewFile *.html iabbrev <silent> <h5> <h5></h5><left><left><left><left><left><c-r>=Eatchar('\s')<cr>
-    autocmd BufRead,BufNewFile *.html iabbrev <silent> <h6> <h6></h6><left><left><left><left><left><c-r>=Eatchar('\s')<cr>
-
-    " Table tag
-    autocmd BufRead,BufNewFile *.html iabbrev <silent> <table> <table><cr><cr></table><up><left><left><left><left><left>
-
-    " Table Head tag
-    autocmd BufRead,BufNewFile *.html iabbrev <silent> <thead> <thead><cr><cr></thead><up><left><left><left><left><left>
-
-    " Table header tag
-    autocmd BufRead,BufNewFile *.html iabbrev <silent> <th> <th></th><left><left><left><left><left><c-r>=Eatchar('\s')<cr>
-
-    " Table row tag
-    autocmd BufRead,BufNewFile *.html iabbrev <silent> <tr> <tr><cr><cr></tr><up><left><left>
-
-    " Table Body tag
-    autocmd BufRead,BufNewFile *.html iabbrev <silent> <tbody> <tbody><cr><cr></tbody><up><left><left><left><left><left>
-
-    " Table data tag
-    autocmd BufRead,BufNewFile *.html iabbrev <silent> <td> <td></td><left><left><left><left><left><c-r>=Eatchar('\s')<cr>
-
-    " JavaScript tag
-    " autocmd BufRead,BufNewFile *.html iabbrev <silent> <script> <script><cr><cr></script><up><left><left><left><left><left><left>
-
-    " No JavaScript tag
-    autocmd BufRead,BufNewFile *.html iabbrev <silent> <noscript> <noscript><cr><cr><noscript><up><left><left><left><left><left><left><left><left>
-
-    " Div tag
-    autocmd BufRead,BufNewFile *.html iabbrev <silent> <div> <div><cr><cr></div><up><left><left><left>
-
-    " Span tag
-    autocmd BufRead,BufNewFile *.html iabbrev <silent> <span> <span></span><left><left><left><left><left><left><left><c-r>=Eatchar('\s')<cr>
-
-    " Input tag
-    autocmd BufRead,BufNewFile *.html iabbrev <silent> <input> <input type="" name="" placeholder=""/><left><left><left><left><left><left><left><left><left><left><left><left><left><left><left><left><left><left><left><left><left><left><left><left><left><left><c-r>=Eatchar('\s')<cr>
-
-    " Label tag
-    autocmd BufRead,BufNewFile *.html iabbrev <silent> <label> <label></label><left><left><left><left><left><left><left><left><c-r>=Eatchar('\s')<cr>
-
-    " Select tag
-    autocmd BufRead,BufNewFile *.html iabbrev <silent> <select> <select name=""><cr><cr></select><up><left><left><left><left><left><left>
-
-    " Option tag
-    autocmd BufRead,BufNewFile *.html iabbrev <silent> <option> <option value=""></option><left><left><left><left><left><left><left><left><left><c-r>=Eatchar('\s')<cr>
-
-    " Button tag
-    autocmd BufRead,BufNewFile *.html iabbrev <silent> <button> <button></button><left><left><left><left><left><left><left><left><left><c-r>=Eatchar('\s')<cr>
-
-    " Text area tag
-    autocmd BufRead,BufNewFile *.html iabbrev <silent> <textarea> <textarea><cr><cr></textarea><up><left><left><left><left><left><left><left><left>
-
-    " Comment tag
-    autocmd BufRead,BufNewFile *.html iabbrev <silent> <!-- <!-- --><left><left><left><left>
-
-    " Header tag
-    autocmd BufRead,BufNewFile *.html iabbrev <silent> <header> <header><cr><cr></header><up><left><left><left><left><left><left>
-
-    " Nav tag
-    autocmd BufRead,BufNewFile *.html iabbrev <silent> <nav> <nav><cr><cr></nav><up><left><left><left>
-
-    " Article tag
-    autocmd BufRead,BufNewFile *.html iabbrev <silent> <article> <article><cr><cr></article><up><left><left><left><left><left><left><left>
-
-    " Section tag
-    autocmd BufRead,BufNewFile *.html iabbrev <silent> <section> <section><cr><cr></section><up><left><left><left><left><left><left><left>
-
-    " Aside tag
-    autocmd BufRead,BufNewFile *.html iabbrev <silent> <aside> <aside><cr><cr></aside><up><left><left><left><left><left>
-
-    " Footer tag
-    autocmd BufRead,BufNewFile *.html iabbrev <silent> <footer> <footer><cr><cr></footer><up><left><left><left><left><left><left>
-
-
-" http://triin.net/2006/06/12/html AND https://www.w3schools.com/tags/default.asp
-
-endif
+autocmd FileType html,css inoremap >> ><esc>:call feedkeys(AutoCompleteTag('n'), 'n')<cr>
 
 " ================================================== Buffers ==================================================
 set hidden
@@ -275,11 +216,29 @@ set title
 syntax on                       " turn syntax highlighting on by default
 set vb                          " turn on the "visual bell" - which is much quieter than the "audio blink"
 set laststatus=2                " make the last line where the status is two lines deep so you can see status always
-" set background=dark             " Use colours that work well on a dark background (Console is usually black)
+set background=dark             " Use colours that work well on a dark background (Console is usually black)
 set clipboard=unnamed           " set clipboard to unnamed to access the system clipboard under windows
 " Show EOL type and last modified timestamp, right after the filename
-set statusline=%<%F%h%m%r\ [%{&ff}]\ (%{strftime(\"%H:%M\ %d/%m/%Y\",getftime(expand(\"%:p\")))})%=%l,%c%V\ %P
-colorscheme sublimemonokai
+" Status line tutorial from https://shapeshed.com/vim-statuslines/
+" Colors: #DiffText# (Red), #WildMenu# (Yellow), #DiffAdd# (Blue), 
+" #SpellRare# (Purple), #Visual# (white)
+set statusline=
+set statusline+=%#MoreMsg#
+set statusline+=\ %t\ 
+set statusline+=%#MoreMsg#
+set statusline+=%m
+set statusline+=%#Question#
+set statusline+=%r
+set statusline+=%#PmenuSel#
+set statusline+=%=\ (%{strftime(\"%H:%M\ %d/%m/%Y\",getftime(expand(\"%:p\")))})
+set statusline+=%#MoreMsg#
+set statusline+=%y
+set statusline+=%#DiffAdd#
+set statusline+=\ %l:%v\ 
+set statusline+=%#SpellRare#
+set statusline+=\ %P\ 
+
+colorscheme default
 
 " ================================================== Whitespace ==================================================
 set ai                          " set auto-indenting on for programming
@@ -326,6 +285,19 @@ inoremap <Tab> <C-R>=Tab_Or_Complete()<CR>
 
 " ================================================== Code folding ==================================================
 set foldmethod=manual       " manual fold
+
+
+" ================================================== Conceal ==================================================
+set conceallevel=2
+set concealcursor=ni
+
+call matchadd('Conceal','delta',1,-1,{'conceal': '∆'})
+call matchadd('Conceal','pi',1,-1,{'conceal': 'π'})
+call matchadd('Conceal','!=',1,-1,{'conceal': '≠'})
+call matchadd('Conceal','>=',1,-1,{'conceal': ' ≥ '})
+call matchadd('Conceal','<=',1,-1,{'conceal': ' ≤ '})
+call matchadd('Conceal','->',1,-1,{'conceal': ' → '})
+call matchadd('Conceal','<-',1,-1,{'conceal': ' ← '})
 
 " ================================================= Auto commenting =================================================
 let s:comment_map = { 
