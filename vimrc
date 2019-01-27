@@ -51,11 +51,19 @@ nnoremap <leader>h g^<space>
 " Big jump right (to last non-blank character)
 nnoremap <leader>l g_
 
-" Remap ev to edit vimrc file
-nnoremap <leader>ev :tabedit /c/Users/m4rc0/AppData/Local/Programs/cmder/vendor/git-for-windows/etc/vimrc<cr>
+if has("unix")
+    " Remap ev to edit vimrc file
+    nnoremap <leader>ev :tabedit /usr/share/vim/vimrc<cr>
+    " Remap sv to "refresh" vimrc
+    nnoremap <leader>sv :source /usr/share/vim/vimrc<cr>
 
-" Remap sv to "refresh" vimrc
-nnoremap <leader>sv :source /c/Users/m4rc0/AppData/Local/Programs/cmder/vendor/git-for-windows/etc/vimrc<cr>
+elseif has("win32unix")
+    " Remap ev to edit vimrc file
+    nnoremap <leader>ev :tabedit /c/Users/m4rc0/AppData/Local/Programs/cmder/vendor/git-for-windows/etc/vimrc<cr>
+    " Remap sv to "refresh" vimrc
+    nnoremap <leader>sv :source /c/Users/m4rc0/AppData/Local/Programs/cmder/vendor/git-for-windows/etc/vimrc<cr>
+
+endif
 
 " Remap Ctrl+W for use in Cmder
 nnoremap <c-w> <c-s-w>
@@ -67,6 +75,10 @@ Plug 'tpope/vim-surround'
 Plug 'mattn/emmet-vim'
 Plug 'tpope/vim-repeat'
 Plug 'junegunn/vim-emoji'
+Plug 'scrooloose/nerdtree'
+Plug 'tomasr/molokai'
+Plug 'vim-airline/vim-airline'
+Plug 'vim-airline/vim-airline-themes'
 " Plug 'sirver/ultisnips'
 " List ends here. Plugins become visible to VIM
 call plug#end()
@@ -104,15 +116,75 @@ endif
 
 " ================================================== Emmet ====================================================
 let g:user_emmet_install_global = 0
-autocmd FileType html,css EmmetInstall
+if has("autocmd")
+    autocmd FileType html,css EmmetInstall
+endif
 let g:user_emmet_mode='n'    "only enable normal mode functions.
 let g:user_emmet_leader_key= ',e'
 
 " ================================================== Airline ====================================================
-" let g:airline#extensions#tabline#enabled = 1
-" let g:airline_theme='molokai'
-,
-" set ttimeoutlen=50
+let g:airline_theme='dark'
+let g:airline_powerline_fonts = 1
+
+if !exists('g:airline_symbols')
+    let g:airline_symbols = {}
+endif
+
+
+" unicode symbols
+let g:airline_left_sep = '»'
+let g:airline_left_sep = '►'
+let g:airline_right_sep = '«'
+let g:airline_right_sep = '◄'
+let g:airline_symbols.linenr = '¶'
+let g:airline_symbols.branch = '↨'
+let g:airline_symbols.paste = 'ρ'
+let g:airline_symbols.paste = 'Þ'
+let g:airline_symbols.paste = '||'
+let g:airline_symbols.whitespace = 'Ξ'
+                          
+
+let g:airline_section_a = '%{airline#util#wrap(airline#parts#mode(),0)} %{airline#util#wrap(airline#parts#spell(),0)}'
+let g:airline_section_b = '%t %m'
+let g:airline_section_c = ''
+let g:airline_section_y = "%Y %{\"[\".(&fenc==\"\"?&enc:&fenc).\"\]\"}" 
+let g:airline_section_z='%P %l/%L:%v' 
+let g:airline_section_warning = ''
+" let g:airline_section_warning="(%{strftime(\"%H:%M\ %d/%m/%Y\",getftime(expand(\"%:p\")))})"
+
+set ttimeoutlen=50
+
+" Status line tutorial from https://shapeshed.com/vim-statuslines/
+" Colors: #DiffText# (Red), #WildMenu# (Yellow), #DiffAdd# (Blue), 
+" #SpellRare# (Purple), #Visual# (white)
+" set statusline=
+" set statusline+=%#MoreMsg#
+" set statusline+=\ %t\ 
+" set statusline+=%#MoreMsg#
+" set statusline+=%m
+" set statusline+=%#Question#
+" set statusline+=%r
+" set statusline+=%#PmenuSel#
+" set statusline+=%=\ (%{strftime(\"%H:%M\ %d/%m/%Y\",getftime(expand(\"%:p\")))})
+" set statusline+=%#MoreMsg#
+" set statusline+=%y
+" set statusline+=%#DiffAdd#
+" set statusline+=\ %l:%v\ 
+" set statusline+=%#SpellRare#
+" set statusline+=\ %P\ 
+
+" ================================================== NERDTree ====================================================
+if has("autocmd")
+    autocmd bufenter * if (winnr("$") == 1 && exists("b:NERDTree") && b:NERDTree.isTabTree()) | q | endif
+
+endif
+nnoremap <leader>pnt :NERDTreeToggle<CR>
+let g:NERDTreeDirArrowExpandable = '►'
+let g:NERDTreeDirArrowCollapsible = '▼'
+
+" ================================================== Molokai theme ====================================================
+colorscheme molokai
+let g:molokai_original = 1
 
 
 " ================================================== Abbreviations ==================================================
@@ -185,7 +257,9 @@ func AutoCompleteTag(mode)
 
 endfunc
 
-autocmd FileType html,css inoremap >> ><esc>:call feedkeys(AutoCompleteTag('n'), 'n')<cr>
+if has("autocmd")
+    autocmd FileType html,css inoremap >> ><esc>:call feedkeys(AutoCompleteTag('n'), 'n')<cr>
+endif
 
 " ================================================== Buffers ==================================================
 set hidden
@@ -218,27 +292,6 @@ set vb                          " turn on the "visual bell" - which is much quie
 set laststatus=2                " make the last line where the status is two lines deep so you can see status always
 set background=dark             " Use colours that work well on a dark background (Console is usually black)
 set clipboard=unnamed           " set clipboard to unnamed to access the system clipboard under windows
-" Show EOL type and last modified timestamp, right after the filename
-" Status line tutorial from https://shapeshed.com/vim-statuslines/
-" Colors: #DiffText# (Red), #WildMenu# (Yellow), #DiffAdd# (Blue), 
-" #SpellRare# (Purple), #Visual# (white)
-set statusline=
-set statusline+=%#MoreMsg#
-set statusline+=\ %t\ 
-set statusline+=%#MoreMsg#
-set statusline+=%m
-set statusline+=%#Question#
-set statusline+=%r
-set statusline+=%#PmenuSel#
-set statusline+=%=\ (%{strftime(\"%H:%M\ %d/%m/%Y\",getftime(expand(\"%:p\")))})
-set statusline+=%#MoreMsg#
-set statusline+=%y
-set statusline+=%#DiffAdd#
-set statusline+=\ %l:%v\ 
-set statusline+=%#SpellRare#
-set statusline+=\ %P\ 
-
-colorscheme default
 
 " ================================================== Whitespace ==================================================
 set ai                          " set auto-indenting on for programming
@@ -288,16 +341,20 @@ set foldmethod=manual       " manual fold
 
 
 " ================================================== Conceal ==================================================
-set conceallevel=2
-set concealcursor=ni
+
+
+if has("autocmd")
+    autocmd VimEnter * set conceallevel=1
+    autocmd VimEnter * set concealcursor=ni
+endif
 
 call matchadd('Conceal','delta',1,-1,{'conceal': '∆'})
 call matchadd('Conceal','pi',1,-1,{'conceal': 'π'})
 call matchadd('Conceal','!=',1,-1,{'conceal': '≠'})
-call matchadd('Conceal','>=',1,-1,{'conceal': ' ≥ '})
-call matchadd('Conceal','<=',1,-1,{'conceal': ' ≤ '})
-call matchadd('Conceal','->',1,-1,{'conceal': ' → '})
-call matchadd('Conceal','<-',1,-1,{'conceal': ' ← '})
+call matchadd('Conceal','>=',1,-1,{'conceal': '≥'})
+call matchadd('Conceal','<=',1,-1,{'conceal': '≤'})
+call matchadd('Conceal','->',1,-1,{'conceal': '→'})
+call matchadd('Conceal','<-',1,-1,{'conceal': '←'})
 
 " ================================================= Auto commenting =================================================
 let s:comment_map = { 
