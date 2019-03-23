@@ -1,7 +1,7 @@
 set nocompatible                " vi compatible is LAME
 
-
-if has("autocmd")
+" Diff
+if has('autocmd')
 
     "Remember the positions in files with some git-specific exceptions"
     autocmd BufReadPost *
@@ -24,7 +24,6 @@ if has("autocmd")
     autocmd Syntax gitcommit setlocal textwidth=74
 
 endif
-
 
 source $VIMRUNTIME/mswin.vim
 behave mswin
@@ -63,40 +62,69 @@ set splitbelow
 set splitright
 
 " ================================ Dictionaries ================================
-set dictionary=$VIMRUNTIME\spell
-set spell spelllang=en,es
+if has('spell')
+    set dictionary=$VIMRUNTIME\spell
+    set spell spelllang=en,es
+
+    " Pressing ,ss will toggle and untoggle spell checking
+    nnoremap <leader>ss :setlocal spell!<cr>
+    " Go to next spell error
+    nmap <leader>sn ]s
+    " Go to previous spell error
+    nmap <leader>sp [s
+    " Add word to dictionary 
+    nmap <leader>sa zg
+    " Remove word from dictionary 
+    nmap <leader>sd zw
+    " Check for spelling suggestions
+    nmap <leader>sc z=
+else
+    echom "[*] ERROR: NO SPELL - Could not configure spell check"
+endif
+
 set thesaurus+=$VIMRUNTIME\spell\en_thesaurus.txt
 " For making everything UTF-8
 set encoding=utf-8
 let &termencoding = &encoding
-set fileencoding=utf-8
-set fileencodings=utf-8
+let &fileencoding = &encoding
+let &fileencodings = &encoding
 
 " ================================= Interface ================================= 
 set number                      " Add line numbers
 set numberwidth=5               " Set line number width
-set noshowmode                    " show the current mode
+set noshowmode                  " Do not show the current mode
 set showcmd                     " Show currently-typed command
-set title
-syntax on                       " turn syntax highlighting on by default
-set visualbell                  " turn on the "visual bell" - which is much quieter than the "audio blink"
-set laststatus=2                " make the last line where the status is two lines deep so you can see status always
-set background=dark             " Use colours that work well on a dark background (Console is usually black)
-set clipboard=unnamed           " set clipboard to unnamed to access the system clipboard under windows
+set title                       " Show tab titles
+syntax on                       " Turn syntax highlighting on by default
+set visualbell                  " Use visual bell instead of beeping when doing something wrong
+set laststatus=2                " Make the last line where the status is two lines deep so you can see status always
+set background=dark             " use colours that work well on a dark background (Console is usually black)
+set clipboard=unnamed           " Set clipboard to unnamed to access the system clipboard under windows
 set sidescrolloff=2
 set scrolloff=2
 set binary
 set ttyfast
+set ruler                       " show the cursor position all the time
+set confirm                     " Confirm commands instead of throwin errors
+set cmdheight=2                 " Make the ex command line 2 lines high
+set foldcolumn=0                " Remove margin to the left
+set t_Co=16
 
+if has('mouse')
+    set mouse=a
+endif
 
 " ==================================== GUI ====================================
-
 if has("gui_running")
     set guioptions=cRLhb            " Remove menubar and other disturbing items in gVIM
     set guifont=Lucida_Console:h19qANTIALIASED
     set t_Co=256
     set cursorline
-    autocmd VimEnter * execute "simalt ~x"
+    if has('autocmd')
+        autocmd VimEnter * execute "simalt ~x"
+    else
+        echom "[*] ERROR: NO AUTOCMD - Did not maximize window"
+    endif
 endif
 
 
@@ -114,15 +142,22 @@ set tabstop=4 softtabstop=4             " show existing tab with 4 spaces width
 set shiftwidth=4                        " when indenting with '>', use 4 spaces width
 set expandtab                           " On pressing tab, insert 4 spaces
 set noshiftround
+set nostartofline
 
 " ================================= Searching =================================
 set incsearch ignorecase smartcase
-set showmatch                   " automatically show matching brackets. works like it does in bbedit.
-set ruler                       " show the cursor position all the time
+set showmatch                   " automatically show matching brackets.  
+set magic
 
 " ========================= History and file handling =========================
 set history=999             " Increase history (default = 20)
 set undolevels=999          " More undo (default=100)
+if has('persistent_undo')
+    set undodir=expand('$VIMRUNTIME\undos')
+    set undofile
+else
+    echom "[*] ERROR: NO PERSISTENT UNDO - Could not set up persistent udo"
+endif
 
 " =========================== Backup and Swap Files ===========================
 set nobackup
@@ -135,7 +170,7 @@ set timeoutlen=2000              " how long it wait for mapped commands
 
 " ========================== Use TAB to autocomplete ==========================
 set omnifunc=syntaxcomplete#Complete
-set complete=.,w,b,i,d,u,t
+set complete=.,w,b,d,u,t
 set completeopt=longest,menuone,preview
 
 " https://vim.fandom.com/wiki/Make_Vim_completion_popup_menu_work_just_like_in_an_IDE
@@ -161,13 +196,37 @@ inoremap <expr> <s-tab> pumvisible() ? "\<c-o>" : "\<c-x>\<c-o>"
 
 
 " ================================ Code folding ===============================
-set foldmethod=manual       " manual fold
+if has('folding')
+    set foldmethod=manual       " manual fold
+else
+    echom "[*] Error: NO FOLDING Could not configure code folding"
+endif
 
 " ================================== Sessions =================================
-set sessionoptions="blank,buffers,curdir,folds,globals,resize,sesdir,tabpages,terminal"
+if has('mksession')
+    if has('autocmd')
+        augroup vim_session
+            autocmd VimEnter * set sessionoptions=blank
+            autocmd VimEnter * set sessionoptions+=buffers
+            autocmd VimEnter * set sessionoptions+=curdir
+            autocmd VimEnter * set sessionoptions+=folds
+            autocmd VimEnter * set sessionoptions+=globals
+            autocmd VimEnter * set sessionoptions+=resize
+            autocmd VimEnter * set sessionoptions+=tabpages
+            autocmd VimEnter * set sessionoptions+=terminal
+            autocmd VimEnter * set sessionoptions+=terminal
+            autocmd VimEnter * set sessionoptions+=winpos
+            autocmd VimEnter * set sessionoptions+=winsize
+        augroup END
+    else
+        echom "[*] ERROR: NO AUTOCMD - Did not configure vim sessions"
+    endif
 
-let g:sessions_dir = "$VIMRUNTIME\\sessions"
-execute 'cnoreabbrev mks mksession ' . g:sessions_dir . '\'
+    let g:sessions_dir = "$VIMRUNTIME\\..\\..\\..\\Data\\settings\\sessions"
+    execute 'cnoreabbrev mks mksession! ' . g:sessions_dir . '\'
+else
+    echom "[*] ERROR: NO SESSIONS - Could not configure vim sessions"
+endif
 
 " =========================== User defined mappings ===========================
 
@@ -181,10 +240,10 @@ nnoremap k gk
 nnoremap j gj
 
 " Remap ev to edit vimrc file
-nnoremap <silent> <leader>ev :tabedit $VIMRUNTIME\..\..\..\Data\settings\_vimrc<cr>
+nnoremap <silent> <leader>ev :tabedit $HOME/.vimrc<cr>
 
 " Remap sv to "refresh" vimrc
-nnoremap <silent> <leader>sv :source $VIMRUNTIME\..\..\..\Data\settings\_vimrc<cr>
+nnoremap <silent> <leader>lv :source $Home/.vimrc<cr>
 
 " Searches centralize result on screen
 nnoremap n nzzzv
@@ -203,6 +262,9 @@ vnoremap <m-j> "td"tp'[V']
 " Control-backspace deletes a word
 inoremap <c-bs> <esc>dbxi
 
+" Control-backspace deletes a word
+inoremap <C-Del> <esc>dwi
+
 " Control-a selects all in v-line mode
 inoremap <c-a> <esc>ggVG
 nnoremap <c-a> ggVG
@@ -211,6 +273,8 @@ nnoremap <c-a> ggVG
 nnoremap <silent> <c-s> :update<cr>
 inoremap <silent> <c-s> <esc>:update<cr>a
 
+" Map Y to act like D and C (To yank until EOL, rather than act as yy)
+nnoremap Y y$
 
 " ============================== Ex command remap ==============================
 command! W w
@@ -226,10 +290,46 @@ command! QA qa
 
 " ============================== Custom functions ==============================
 
+" Install required dictionary files and vim plug automatically to the 
+" corresponding destinations 
+function! QuickSetup()
+    " Install Vim-Plug and install all plugins 
+    let l:destination = expand('$VIMRUNTIME/autoload')
+    execute "!wget https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim -P " . l:destination
+    execute "PlugInstall"
+
+    " Install all spell files
+    if has('spell')
+        let l:destination = expand('$VIMRUNTIME/spell')
+
+        " English ascii dictionary and suggestion file
+        execute "!wget ftp.vim.org/vim/runtime/spell/en.ascii.spl -P " . l:destination
+        execute "!wget ftp.vim.org/vim/runtime/spell/en.ascii.sug -P " . l:destination
+
+        " English latin1 dictionary and suggestion file
+        execute "!wget ftp.vim.org/vim/runtime/spell/en.latin1.spl -P " . l:destination
+        execute "!wget ftp.vim.org/vim/runtime/spell/en.latin1.sug -P " . l:destination
+
+        " English utf-8 dictionary and suggestion file
+        execute "!wget ftp.vim.org/vim/runtime/spell/en.utf-8.spl -P " . l:destination
+        execute "!wget ftp.vim.org/vim/runtime/spell/en.utf-8.sug -P " . l:destination
+
+        " Spanish latin1 dictionary and suggestion file
+        execute "!wget ftp.vim.org/vim/runtime/spell/es.latin1.spl -P " . l:destination
+        execute "!wget ftp.vim.org/vim/runtime/spell/es.latin1.sug -P " . l:destination
+
+        " Spanish utf-8 dictionary and suggestion file
+        execute "!wget ftp.vim.org/vim/runtime/spell/es.utf-8.spl -P " . l:destination
+        execute "!wget ftp.vim.org/vim/runtime/spell/es.utf-8.sug -P " . l:destination
+    else
+        echom "[*] ERROR: NO SPELL - Did not download dictionaries"  
+    endif
+endfunction
+
 function! Eatchar(pat)
     let l:c = nr2char(getchar(0))
     return (l:c =~ a:pat) ? '' : c
-endfunc
+endfunction
 
 " Define the behavior of specific tags
 let s:tags_content = { 
@@ -293,28 +393,61 @@ function! AutoCompleteTag(mode)
 
     return 'a'
 
-endfunc
+endfunction
 
-if has("autocmd")
-    autocmd FileType html,css inoremap >> ><esc>:call feedkeys(AutoCompleteTag('n'), 'n')<cr>
+if has('autocmd')
+    autocmd FileType html,css inoremap <silent> >> ><esc>:call feedkeys(AutoCompleteTag('n'), 'n')<cr>
+else
+    echom "[*] ERROR: NO AUTOCMD - Could not run inoremap <silent> >> ><esc>:call feedkeys(AutoCompleteTag('n'), 'n')<cr>"
 endif
 
+" Function used to remove unlisted buffers quickly 
+function! DeleteUnlistedBuffers()
+    execute "bwipeout! " . join(filter(range(1, bufnr('$')), 'buflisted(v:val) == 0'), " ")
+endfunction
 
+" Function used to clear all registers quickly
+function! ClearAllRegisters()
+    let regs=split('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789/-"*', '\zs')
+    for r in regs
+        call setreg(r, [])
+    endfor
+    execute "registers"
+endfunction
+
+" Function used to run the code in several ways as long as it is a supported 
+" filetype 
 function! RunCode()
-    let l:full_path = shellescape(expand('%:p'))
+    if has("terminal")
+        let l:full_path = shellescape(expand('%:p'))
 
-    if &ft == 'python'
-        execute "vert term ++kill=term python " . l:full_path
-        echom("normal! :vert term ++kill=term python " . l:full_path)
+        if &filetype == 'python'
 
-    elseif &ft == 'javascript'
-        echo("JS")
-        execute "!node " . l:full_path 
+            let l:current_buffer = bufwinnr("%")
+            let l:terminal_buffers = filter(range(1, bufnr('$')), 'buflisted(v:val) == 1 && (bufname(v:val) =~? "!python")')
+
+            if len(l:terminal_buffers) == 0
+                execute "vert term ++kill=term python " . l:full_path
+            else
+                execute "bwipeout! " . get(l:terminal_buffers, 0, 'default' )
+                execute "vert term ++kill=term python " . l:full_path
+            endif
+
+            " execute l:current_buffer . "wincmd w"
+
+
+        elseif &ft == 'javascript'
+            echo("JS")
+            execute "!node " . l:full_path 
+        else
+            echo("I don't know how to run the file")
+        endif
+
     else
-        echo("I don't know how to run the file")
+        echom "[*] ERROR: NO TERMINAL - Could not run code without integrated terminal"
     endif
 
-endfunc
+endfunction
 
 nnoremap <silent> <c-enter> :call RunCode()<cr>
 
@@ -339,7 +472,7 @@ function! AdjustFontSize(amount)
         let &guifont = l:newfont
 
     else
-        echoerr "You need to run the GTK2 version of Vim to use this function."
+        echom "[*] ERROR: NO GUI RUNNING - Could not increase fontsize of non-gui"
     endif
 endfunction
 
@@ -347,16 +480,50 @@ nnoremap <silent> <leader>= :call AdjustFontSize(1)<cr>
 nnoremap <silent> <leader>- :call AdjustFontSize(-1)<cr>
 
 " ================================= Terminal ==================================
-tnoremap <esc> <C-\><C-n>
-cnoreabbrev term vert term ++kill=term
-cnoreabbrev hterm term ++kill=term
-cnoreabbrev tterm tabnew<bar>term ++curwin ++kill=term
 
-" autocmd SourcePre * let $PATH = "" . $PATH
-" let $PATH = $PATH . "C:/Users/m4rc0/Documents/gVim/WPy-3710;"
-" let $PATH = $PATH . "C:/Users/m4rc0/Documents/gVim/Git;"
-set pythonthreehome=$VIMRUNTIME\..\..\..\Programming\WPy-3710\python-3.7.1
-set pythonthreedll=$VIMRUNTIME\..\..\..\Programming\WPy-3710\python-3.7.1\python37.dll
+if has("terminal")
+    " Use escape key instead of strange combination
+    tnoremap <esc> <C-\><C-n>
+
+    " Use git-cmd instead of the system-default windows cmd
+    let g:git_cmd_dir = expand('$VIMRUNTIME\..\..\..\Programming\Git\git-cmd.exe')
+
+    " Prepare command mode mappings which make the use of 'term' less lengthy 
+    cnoreabbrev term execute "vert term ++kill=term " . g:git_cmd_dir
+    cnoreabbrev hterm execute "term ++kill=term " . g:git_cmd_dir
+    cnoreabbrev tterm execute "tabnew<bar>term ++kill=term ++curwin " . g:git_cmd_dir
+
+    " Prepare PATH variables for ... 
+    " Git
+    let s:git_full_path = expand('$VIMRUNTIME\..\..\..\Programming\Git\bin') . ";" . expand(' $VIMRUNTIME\..\..\..\Programming\Git\usr\bin') . ";"
+    " Python
+    let s:python_full_path = expand('$VIMRUNTIME\..\..\..\Programming\WPy-3710\python-3.7.1') . ";"
+
+    if has('autocmd')
+        augroup set_path
+            " Only add git to path if it isn't already in PATH 
+            if $PATH !~? "git"
+                autocmd SourcePre * let $PATH = s:git_full_path . $PATH
+            endif
+
+            " Only add python to path if it isn't already in PATH 
+            if $PATH !~? "python" && $PATH !~? "conda" && $PATH !~? "WPy-3710"
+                autocmd SourcePre * let $PATH = s:python_full_path . $PATH
+            endif
+        augroup END
+    else
+        echom "[*] ERROR: NO AUTOCMD - Could not update PATH environment variable"
+    endif
+
+else
+    echom "[*] ERROR: NO TERMINAL - Could not configure terminal settings"
+endif
+
+" Set the python3 home and dll directory, crucial to use python in Vim
+if has('python_dynamic')
+    set pythonthreehome=$VIMRUNTIME\..\..\..\Programming\WPy-3710\python-3.7.1
+    set pythonthreedll=$VIMRUNTIME\..\..\..\Programming\WPy-3710\python-3.7.1\python37.dll
+endif
 
 
 " ================================== Plugins ==================================
@@ -393,7 +560,7 @@ call plug#end()
 
 
 " ================================ Vim Surround ================================
-if has("autocmd")
+if has('autocmd') 
     augroup vim_surround
         autocmd!
 
@@ -412,16 +579,25 @@ if has("autocmd")
         " Map surround selection to <leader>s and eliminate S
         autocmd VimEnter imap <leader>s S
     augroup END
-
+else
+    echom "[*] ERROR: NO AUTOCMD - Could not map vim_surround command"
 endif
 
 " =================================== Emmet ===================================
 let g:user_emmet_install_global = 0
-if has("autocmd")
-    autocmd FileType html,css EmmetInstall
-endif
-let g:user_emmet_mode='n'    "only enable normal mode functions.
+" Only enable Emmet in normal mode functions.
+let g:user_emmet_mode='n'
+" Set Emmet leader key
 let g:user_emmet_leader_key= mapleader.'e'
+
+if has('autocmd')
+    augroup vim_emmet
+        " Create Emmet mappings to current buffer
+        autocmd FileType html,css EmmetInstall
+    augroup END
+else
+    echom "[*] ERROR: NO AUTOCMD - Could not run 'Emmet Install'"
+endif
 
 
 " ============================ Preinstalled matchit ===========================
@@ -432,7 +608,9 @@ endif
 
 " ================================= lightline =================================
 let g:lightline = { 'colorscheme': 'wombat' }
-autocmd BufEnter * execute "call lightline#enable()"
+if has('autocmd')
+    autocmd BufEnter * execute "call lightline#enable()" 
+endif
 
 " Status line tutorial from https://shapeshed.com/vim-statuslines/
 " Colors: #DiffText# (Red), #WildMenu# (Yellow), #DiffAdd# (Blue),
@@ -472,7 +650,7 @@ nnoremap <silent> <leader>nt :Texplore<cr>
 nnoremap <silent> <leader>no :Sexplore<cr>
 nnoremap <silent> <leader>nv :Vexplore!<cr>
 
-if has("autocmd")
+if has('autocmd')
     augroup vim_netrw
         autocmd!
 
@@ -503,7 +681,8 @@ if has("autocmd")
         "    t         Open file in new tab
         "    v         Open file in vertical split
     augroup END
-
+else
+    echom "[*] ERROR: NO AUTOCMD - Could not map netrw commands"
 endif
 
 
@@ -512,10 +691,14 @@ endif
 " let g:molokai_original = 1
 
 " ================================ Tender theme ===============================
-" autocmd VimEnter * colorscheme tender
+if has('autocmd') | autocmd VimEnter * colorscheme tender |
+else | echom "[*] ERROR: NO AUTOCMD - Could not set the TENDER colorscheme" |
+endif
 
 " =============================== One half theme ==============================
-autocmd VimEnter * colorscheme onehalfdark
+" if has('autocmd') | autocmd VimEnter * colorscheme onehalfdark |
+" else | echom "[*] ERROR: NO AUTOCMD - Could not set the ONEHALFDARK colorscheme" |
+" endif
 
 
 " ==================================== Ale ====================================
@@ -540,7 +723,6 @@ let g:ale_linters = {
             \ 'javascript': ['eslint']
             \ }
 
-
 " nmap <silent> <leader>gd :ALEGoToTypeDefinitionInVSplit<cr>
 " nmap <silent> <leader>gdt :ALEGoToTypeDefinitionInTab<cr>
 " nmap <silent> <leader>gds :ALEGoToTypeDefinitionInSplit<cr>
@@ -548,19 +730,21 @@ let g:ale_linters = {
 nmap <silent> <leader>aj :ALENext<cr>
 nmap <silent> <leader>ak :ALEPrevious<cr>
 
+
 " ================================= winresizer =================================
-
-if has("autocmd")
-    autocmd VimEnter unmap <C-E>
-    autocmd VimEnter unmap <C-a>
-endif
-
 let g:winresizer_enable = 1
 let g:winresizer_finish_with_escape = 1
 let g:winresizer_vert_resize = 5
 let g:winresizer_horiz_resize = 2
 
 nnoremap <leader>w :WinResizerStartFocus<cr>
+
+if has('autocmd')
+    autocmd VimEnter unmap <C-E>
+    autocmd VimEnter unmap <C-a>
+else
+    echom "[*] ERROR: NO AUTOCMD - Could not unmap unwanted winresizer shortcuts"
+endif
 
 
 " ================================ Nerdcommenter ===============================
@@ -570,24 +754,25 @@ let g:NERDCommentEmptyLines = 0
 let g:NERDTrimTrailingWhitespace = 1
 let g:NERDCreateDefaultMappings = 0
 
-nnoremap <leader>cc :call NERDComment('n', 'invert')<cr>
-vnoremap <leader>cc :call NERDComment('x', 'invert')<cr>
-nnoremap <leader>ca :call NERDComment('n', 'comment')<cr>
-vnoremap <leader>ca :call NERDComment('x', 'comment')<cr>
-nnoremap <leader>cd :call NERDComment('n', 'uncomment')<cr>
-vnoremap <leader>cd :call NERDComment('x', 'uncomment')<cr>
-nnoremap <leader>cy :call NERDComment('n', 'yank')<cr>
-vnoremap <leader>cy :call NERDComment('x', 'yank')<cr>
+nnoremap <silent> <leader>cc :call NERDComment('n', 'invert')<cr>
+vnoremap <silent> <leader>cc :call NERDComment('x', 'invert')<cr>
+nnoremap <silent> <leader>ca :call NERDComment('n', 'comment')<cr>
+vnoremap <silent> <leader>ca :call NERDComment('x', 'comment')<cr>
+nnoremap <silent> <leader>cd :call NERDComment('n', 'uncomment')<cr>
+vnoremap <silent> <leader>cd :call NERDComment('x', 'uncomment')<cr>
+nnoremap <silent> <leader>cy :call NERDComment('n', 'yank')<cr>
+vnoremap <silent> <leader>cy :call NERDComment('x', 'yank')<cr>
 
 
 " ================================= auto-pairs =================================
 let g:AutoPairsFlyMode = 0
-
-if has("autocmd")
+if has('autocmd')
     autocmd VimEnter unmap <M-p>
     autocmd VimEnter unmap <M-e>
     autocmd VimEnter unmap <M-n>
     autocmd VimEnter unmap <M-b>
+else
+    echom "[*] ERROR: NO AUTOCMD - Could not unmap unwanted auto-pairs shortcuts"
 endif
 
 
@@ -598,7 +783,7 @@ nmap <leader><leader>w <Plug>(easymotion-overwin-w)
 
 
 " ================================== startify ==================================
-let g:startify_session_dir = expand("$VIMRUNTIME\\sessions") 
+let g:startify_session_dir = expand('$VIMRUNTIME\sessions') 
 let g:startify_lists = [
             \ {'type': 'sessions', 'header':['     Sessions']},
             \ {'type': 'files', 'header':['     Files']},
@@ -611,25 +796,28 @@ let g:startify_change_to_dir = 1
 let g:startify_padding_left = 5
 let g:startify_custom_indices = ['cc', 'dd', 'mm', 'nn', 'pp', 'rr', 'ww', 'xx', 'yy', 'zz']
 
-
-let s:startify_left_addition = repeat(' ', (&columns - 63)/2)
+let s:startify_left_margin = repeat(' ', (&columns - 63)/2)
 
 let g:startify_custom_header = [
-            \ s:startify_left_addition . ' ___      ___ ___  _____ ______           ________    _____     ',
-            \ s:startify_left_addition . '|\  \    /  /|\  \|\   _ \  _   \        |\   __  \  / __  \    ',
-            \ s:startify_left_addition . '\ \  \  /  / \ \  \ \  \\\__\ \  \       \ \  \|\  \|\/_|\  \   ',
-            \ s:startify_left_addition . ' \ \  \/  / / \ \  \ \  \\|__| \  \       \ \   __  \|/ \ \  \  ',
-            \ s:startify_left_addition . '  \ \    / /   \ \  \ \  \    \ \  \       \ \  \|\  \ __\ \  \ ',
-            \ s:startify_left_addition . '   \  __/ /     \ \__\ \__\    \ \__\       \ \_______|\__\ \__\',
-            \ s:startify_left_addition . '    \|__|/       \|__|\|__|     \|__|        \|_______\|__|\|__|',
-            \ s:startify_left_addition . '                                                                ',
-            \ s:startify_left_addition . '                                                                ',
+            \ s:startify_left_margin . ' ___      ___ ___  _____ ______           ________    _____     ',
+            \ s:startify_left_margin . '|\  \    /  /|\  \|\   _ \  _   \        |\   __  \  / __  \    ',
+            \ s:startify_left_margin . '\ \  \  /  / \ \  \ \  \\\__\ \  \       \ \  \|\  \|\/_|\  \   ',
+            \ s:startify_left_margin . ' \ \  \/  / / \ \  \ \  \\|__| \  \       \ \   __  \|/ \ \  \  ',
+            \ s:startify_left_margin . '  \ \    / /   \ \  \ \  \    \ \  \       \ \  \|\  \ __\ \  \ ',
+            \ s:startify_left_margin . '   \  __/ /     \ \__\ \__\    \ \__\       \ \_______|\__\ \__\',
+            \ s:startify_left_margin . '    \|__|/       \|__|\|__|     \|__|        \|_______\|__|\|__|',
+            \ s:startify_left_margin . '                                                                ',
+            \ s:startify_left_margin . '                                                                ',
             \ ]
 
 
 
-cd C:\Users\m4rc0\Documents
- 
+
+
+if !empty(glob('C:\Users\m4rc0\Documents'))
+    cd C:\Users\m4rc0\Documents
+endif
+
 " Diff commands
 " do => diff obtain
 " dp => diff put
