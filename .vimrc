@@ -63,7 +63,7 @@ set splitright
 
 " ================================ Dictionaries ================================
 if has('spell')
-    set dictionary=$VIMRUNTIME\spell
+    set dictionary=$VIMRUNTIME/spell
     set spell spelllang=en,es
 
     " Pressing ,ss will toggle and untoggle spell checking
@@ -82,7 +82,7 @@ else
     echom "[*] ERROR: NO SPELL - Could not configure spell check"
 endif
 
-set thesaurus+=$VIMRUNTIME\spell\en_thesaurus.txt
+set thesaurus+=$VIMRUNTIME/spell/en_thesaurus.txt
 " For making everything UTF-8
 set encoding=utf-8
 let &termencoding = &encoding
@@ -107,8 +107,8 @@ set ttyfast
 set ruler                       " show the cursor position all the time
 set confirm                     " Confirm commands instead of throwin errors
 set cmdheight=2                 " Make the ex command line 2 lines high
-set foldcolumn=0                " Remove margin to the left
-set t_Co=16
+set foldcolumn=1                " Add a little margin to the left
+set t_Co=256
 
 if has('mouse')
     set mouse=a
@@ -153,10 +153,11 @@ set magic
 set history=999             " Increase history (default = 20)
 set undolevels=999          " More undo (default=100)
 if has('persistent_undo')
-    set undodir=expand('$VIMRUNTIME\undos')
+    let s:undo_directory = expand('$VIMRUNTIME/temp/undos')
+    set undodir=l:undo_directory
     set undofile
 else
-    echom "[*] ERROR: NO PERSISTENT UNDO - Could not set up persistent udo"
+    echom "[*] ERROR: NO PERSISTENT UNDO - Could not set up persistent undo"
 endif
 
 " =========================== Backup and Swap Files ===========================
@@ -222,8 +223,8 @@ if has('mksession')
         echom "[*] ERROR: NO AUTOCMD - Did not configure vim sessions"
     endif
 
-    let g:sessions_dir = "$VIMRUNTIME\\..\\..\\..\\Data\\settings\\sessions"
-    execute 'cnoreabbrev mks mksession! ' . g:sessions_dir . '\'
+    let g:sessions_dir = expand('$VIMRUNTIME/../../../Data/settings/sessions')
+    execute 'cnoreabbrev mks mksession! ' . g:sessions_dir . '/'
 else
     echom "[*] ERROR: NO SESSIONS - Could not configure vim sessions"
 endif
@@ -239,11 +240,25 @@ nnoremap k gk
 " Remap j to gj to intuitively jump lines downwards
 nnoremap j gj
 
-" Remap ev to edit vimrc file
-nnoremap <silent> <leader>ev :tabedit $HOME/.vimrc<cr>
+if exists('g:vimrc_dir')
+    " Remap ev to edit vimrc file
+    execute "nnoremap <silent> <leader>ev :tabedit " . g:vimrc_dir . "\<cr>"
 
-" Remap sv to "refresh" vimrc
-nnoremap <silent> <leader>lv :source $Home/.vimrc<cr>
+    " Remap lv to "refresh" vimrc
+    execute "nnoremap <silent> <leader>lv :source " . g:vimrc_dir . "\<cr>"
+elseif has('gui_running')
+    " Remap ev to edit vimrc file
+    nnoremap <silent> <leader>ev :tabedit $VIMRUNTIME/../../../Data/settings/_vimrc<cr>
+
+    " Remap lv to "refresh" vimrc
+    nnoremap <silent> <leader>lv :source $VIMRUNTIME/../../../Data/settings/_vimrc<cr>
+else
+    " Remap ev to edit vimrc file
+    nnoremap <silent> <leader>ev :tabedit $HOME/.vimrc<cr>
+
+    " Remap lv to "refresh" vimrc
+    nnoremap <silent> <leader>lv :source $HOME/.vimrc<cr>
+endif
 
 " Searches centralize result on screen
 nnoremap n nzzzv
@@ -472,7 +487,7 @@ function! AdjustFontSize(amount)
         let &guifont = l:newfont
 
     else
-        echom "[*] ERROR: NO GUI RUNNING - Could not increase fontsize of non-gui"
+        echoerr "You need to run the GTK2 version of Vim to use this function."
     endif
 endfunction
 
@@ -486,7 +501,7 @@ if has("terminal")
     tnoremap <esc> <C-\><C-n>
 
     " Use git-cmd instead of the system-default windows cmd
-    let g:git_cmd_dir = expand('$VIMRUNTIME\..\..\..\Programming\Git\git-cmd.exe')
+    let g:git_cmd_dir = expand('$VIMRUNTIME/../../../Programming/Git/git-cmd.exe')
 
     " Prepare command mode mappings which make the use of 'term' less lengthy 
     cnoreabbrev term execute "vert term ++kill=term " . g:git_cmd_dir
@@ -495,9 +510,9 @@ if has("terminal")
 
     " Prepare PATH variables for ... 
     " Git
-    let s:git_full_path = expand('$VIMRUNTIME\..\..\..\Programming\Git\bin') . ";" . expand(' $VIMRUNTIME\..\..\..\Programming\Git\usr\bin') . ";"
+    let s:git_full_path = expand('$VIMRUNTIME/../../../Programming/Git/bin') . ";" . expand(' $VIMRUNTIME/../../../Programming/Git/usr/bin') . ";"
     " Python
-    let s:python_full_path = expand('$VIMRUNTIME\..\..\..\Programming\WPy-3710\python-3.7.1') . ";"
+    let s:python_full_path = expand('$VIMRUNTIME/../../../Programming/WPy-3710/python-3.7.1') . ";"
 
     if has('autocmd')
         augroup set_path
@@ -521,8 +536,8 @@ endif
 
 " Set the python3 home and dll directory, crucial to use python in Vim
 if has('python_dynamic')
-    set pythonthreehome=$VIMRUNTIME\..\..\..\Programming\WPy-3710\python-3.7.1
-    set pythonthreedll=$VIMRUNTIME\..\..\..\Programming\WPy-3710\python-3.7.1\python37.dll
+    set pythonthreehome=$VIMRUNTIME/../../../Programming/WPy-3710/python-3.7.1
+    set pythonthreedll=$VIMRUNTIME/../../../Programming/WPy-3710/python-3.7.1/python37.dll
 endif
 
 
@@ -691,14 +706,14 @@ endif
 " let g:molokai_original = 1
 
 " ================================ Tender theme ===============================
-if has('autocmd') | autocmd VimEnter * colorscheme tender |
-else | echom "[*] ERROR: NO AUTOCMD - Could not set the TENDER colorscheme" |
-endif
+" if has('autocmd') | autocmd VimEnter * colorscheme tender |
+" else | echom "[*] ERROR: NO AUTOCMD - Could not set the TENDER colorscheme" |
+" endif
 
 " =============================== One half theme ==============================
-" if has('autocmd') | autocmd VimEnter * colorscheme onehalfdark |
-" else | echom "[*] ERROR: NO AUTOCMD - Could not set the ONEHALFDARK colorscheme" |
-" endif
+if has('autocmd') | autocmd VimEnter * colorscheme onehalfdark |
+else | echom "[*] ERROR: NO AUTOCMD - Could not set the ONEHALFDARK colorscheme" |
+endif
 
 
 " ==================================== Ale ====================================
@@ -783,7 +798,7 @@ nmap <leader><leader>w <Plug>(easymotion-overwin-w)
 
 
 " ================================== startify ==================================
-let g:startify_session_dir = expand('$VIMRUNTIME\sessions') 
+let g:startify_session_dir = expand('$VIMRUNTIME/sessions') 
 let g:startify_lists = [
             \ {'type': 'sessions', 'header':['     Sessions']},
             \ {'type': 'files', 'header':['     Files']},
@@ -814,8 +829,10 @@ let g:startify_custom_header = [
 
 
 
-if !empty(glob('C:\Users\m4rc0\Documents'))
-    cd C:\Users\m4rc0\Documents
+if !empty(glob('/c/Users/m4rc0/Documents'))
+    cd /c/Users/m4rc0/Documents
+elseif !empty(glob('C:/Users/m4rc0/Documents'))
+    cd C:/Users/m4rc0/Documents
 endif
 
 " Diff commands
