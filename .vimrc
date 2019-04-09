@@ -458,7 +458,7 @@ function! DownloadVIMRC()
     endif
 
     " Delete local repository
-    execute "!rm -rf vimrcreplacement
+    execute "!rm -rf vimrc"
 
     " Go back to what was the current directory
     execute 'cd ' . fnameescape(l:current_directory)
