@@ -428,7 +428,7 @@ endfunction
 
 " Upload current local vimrc to github repository
 function! DownloadVIMRC()
-
+    " Useless comment
     " Prepare a vimrc_name variable with greater scope
     let l:vimrc_name = ""
     " Prepare a current_directory variable to return to it after the function
