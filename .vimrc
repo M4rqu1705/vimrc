@@ -376,9 +376,16 @@ function! QuickSetup()
     endif
 endfunction
 
-function! UploadVIMRC()
-    let l:vimrc_name = ""
 
+" Upload current local vimrc to github repository
+function! UploadVIMRC()
+
+    " Prepare a vimrc_name variable with greater scope
+    let l:vimrc_name = ""
+    " Prepare a current_directory variable to return to it after the function
+    let l:current_directory = getcwd()
+
+    " Change to VIMRC directory
     if exists('g:vimrc_dir')
         cd g:vimrc_dir
         let l:vimrc_name = ".vimrc"
@@ -389,21 +396,75 @@ function! UploadVIMRC()
         cd $HOME/
         let l:vimrc_name = ".vimrc"
     endif
-    echom "Selected VIMRC name and directory"
 
-    execute "!git clone https://github.com/M4rqu1705/vimrc"
-    echom "Dowloaded VIMRC repository"
-    execute "!cp " . l:vimrc_name . " vimrc/.vimrc"
-    echom "Copied current vimrc to repository"
+    " Download repository in which to copy and upload current vimrc 
+    execute "!git clone https://github.com/M4rqu1705/vimrc && " .
+                \"cp " .  l:vimrc_name . " vimrc/.vimrc "
+
+    " Change to local repository's directory for git commands
     cd vimrc
-    execute "!git add ."
-    execute "!git commit"
-    execute "!git push -fu origin master"
-    echom "Uploaded most recent vimrc!"
+
+    let l:answer = confirm("Are you sure you want to upload the latest changes?", "&Yes\n&No")
+    if l:answer == 1
+
+        " Add contents to staging area, commit them, and upload them
+        execute "!git add . && " .
+                    \ "git commit && " .
+                    \ "git push -fu origin master"
+    else
+        echom "[*] Cancelled VIMRC upload!"
+    endif
+
+    " Go back to user's vimrc directory
+    cd ..
+
+    " Delete local repository
     execute "!rm -rf vimrc"
-    echom "Deleted local repository"
+
+    " Go back to what was the current directory
+    execute 'cd ' . fnameescape(l:current_directory)
 
 endfunction
+
+" Upload current local vimrc to github repository
+function! DownloadVIMRC()
+
+    " Prepare a vimrc_name variable with greater scope
+    let l:vimrc_name = ""
+    " Prepare a current_directory variable to return to it after the function
+    let l:current_directory = getcwd()
+
+    " Change to VIMRC directory
+    if exists('g:vimrc_dir')
+        cd g:vimrc_dir
+        let l:vimrc_name = ".vimrc"
+    elseif has('gui_running')
+        cd $VIMRUNTIME/../../../Data/settings
+        let l:vimrc_name = "_vimrc"
+    else
+        cd $HOME/
+        let l:vimrc_name = ".vimrc"
+    endif
+
+    " Download repository from which to copy the vimrc
+    execute "!git clone https://github.com/M4rqu1705/vimrc"
+
+    let l:answer = confirm("Would you like to replace your vimrc for the downloaded one?", "&Yes\n&No")
+    if l:answer == 1
+        " Copy contents of the downloaded vimrc to the current one 
+        execute "!cp vimrc/.vimrc " . l:vimrc_name
+    else
+        echom "[*] Cancelled VIMRC replacement!"
+    endif
+
+    " Delete local repository
+    execute "!rm -rf vimrcreplacement
+
+    " Go back to what was the current directory
+    execute 'cd ' . fnameescape(l:current_directory)
+
+endfunction
+
 
 function! Eatchar(pat)
     let l:c = nr2char(getchar(0))
@@ -858,8 +919,8 @@ nnoremap <silent> <leader>cc :call NERDComment('n', 'invert')<cr>
 vnoremap <silent> <leader>cc :call NERDComment('x', 'invert')<cr>
 nnoremap <silent> <leader>ca :call NERDComment('n', 'comment')<cr>
 vnoremap <silent> <leader>ca :call NERDComment('x', 'comment')<cr>
-" nnoremap <silent> <leader>cd :call NERDComment('n', 'uncomment')<cr>
-" vnoremap <silent> <leader>cd :call NERDComment('x', 'uncomment')<cr>
+nnoremap <silent> <leader>cd :call NERDComment('n', 'uncomment')<cr>
+vnoremap <silent> <leader>cd :call NERDComment('x', 'uncomment')<cr>
 nnoremap <silent> <leader>cy :call NERDComment('n', 'yank')<cr>
 vnoremap <silent> <leader>cy :call NERDComment('x', 'yank')<cr>
 
