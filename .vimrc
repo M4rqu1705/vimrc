@@ -25,8 +25,8 @@ if has('autocmd')
 
 endif
 
-source $VIMRUNTIME/mswin.vim
-behave mswin
+" source $VIMRUNTIME/mswin.vim
+" behave mswin
 
 set diffexpr=MyDiff()
 function! MyDiff()
@@ -100,16 +100,18 @@ set visualbell                  " Use visual bell instead of beeping when doing 
 set laststatus=2                " Make the last line where the status is two lines deep so you can see status always
 set background=dark             " use colours that work well on a dark background (Console is usually black)
 set clipboard=unnamed           " Set clipboard to unnamed to access the system clipboard under windows
-set sidescrolloff=2
-set scrolloff=2
-set binary
-set ttyfast
+set sidescrolloff=2             " Add space beside the cursor when going off screen 
+set scrolloff=2                 " Add space around the cursor when going off screen
+set binary                      " Used to edit binary files
 set ruler                       " show the cursor position all the time
 set confirm                     " Confirm commands instead of throwin errors
 set cmdheight=2                 " Make the ex command line 2 lines high
 set foldcolumn=1                " Add a little margin to the left
-set t_Co=256
+set t_Co=256                    " Make sure Vim is using 256 colors
+set ttyfast                     " Smoother screen redraw
+set lazyredraw                  " The screen will not be redrawn so frequently 
 
+" Enable the use of mice if they are available
 if has('mouse')
     set mouse=a
 endif
@@ -119,7 +121,8 @@ if has("gui_running")
     set guioptions=cRLhb            " Remove menubar and other disturbing items in gVIM
     set guifont=Lucida_Console:h19qANTIALIASED
     set t_Co=256
-    set cursorline
+    set cursorline                  " Highlight line with cursor
+    " Maximize the screen on enter if has autocmd
     if has('autocmd')
         autocmd VimEnter * execute "simalt ~x"
     else
@@ -135,8 +138,17 @@ set wrapmargin=2
 set textwidth=80 
 set linebreak
 set showbreak=\.\.\.\ 
-set nolist
-set formatoptions=nB1lcwt
+set nolist 
+set formatoptions=tcnBjq2     " Describes automatic formatting
+" t - Auto-wrap text using textwidth
+" c - Auto-wrap comments and insert comment leader in new line
+" n - Recognize numbered lists: format listpat
+" B - When joining lines do not add space between multi-byte characters 
+" j - When joining lines remove comment leaders
+" q - Format comments with gq
+" a - Automatic formatting of paragraphs
+" 2 - Indent second line of a paragraph for the rest of the paragraph 
+
 set virtualedit=insert
 set tabstop=4 softtabstop=4             " show existing tab with 4 spaces width
 set shiftwidth=4                        " when indenting with '>', use 4 spaces width
@@ -145,7 +157,9 @@ set noshiftround
 set nostartofline
 
 " ================================= Searching =================================
-set incsearch ignorecase smartcase
+set incsearch
+set ignorecase
+set smartcase
 set showmatch                   " automatically show matching brackets.  
 set magic
 
@@ -198,7 +212,10 @@ inoremap <expr> <s-tab> pumvisible() ? "\<c-o>" : "\<c-x>\<c-o>"
 
 " ================================ Code folding ===============================
 if has('folding')
-    set foldmethod=manual       " manual fold
+    set foldenable              " Enable code folding and show all folds
+    set foldmethod=manual       " Folds are based on indent level
+    set foldlevelstart=10       " Number of fold levels to be opened at enter
+    set foldnestmax=10
 else
     echom "[*] Error: NO FOLDING Could not configure code folding"
 endif
@@ -214,7 +231,6 @@ if has('mksession')
             autocmd VimEnter * set sessionoptions+=globals
             autocmd VimEnter * set sessionoptions+=resize
             autocmd VimEnter * set sessionoptions+=tabpages
-            autocmd VimEnter * set sessionoptions+=terminal
             autocmd VimEnter * set sessionoptions+=terminal
             autocmd VimEnter * set sessionoptions+=winpos
             autocmd VimEnter * set sessionoptions+=winsize
@@ -240,12 +256,13 @@ nnoremap k gk
 " Remap j to gj to intuitively jump lines downwards
 nnoremap j gj
 
+
 if exists('g:vimrc_dir')
     " Remap ev to edit vimrc file
-    execute "nnoremap <silent> <leader>ev :tabedit " . g:vimrc_dir . "\<cr>"
+    execute "nnoremap <silent> <leader>ev :tabedit " . g:vimrc_dir . "/.vimrc<cr>"
 
     " Remap lv to "refresh" vimrc
-    execute "nnoremap <silent> <leader>lv :source " . g:vimrc_dir . "\<cr>"
+    execute "nnoremap <silent> <leader>lv :source " . g:vimrc_dir . "/.vimrc<cr>"
 elseif has('gui_running')
     " Remap ev to edit vimrc file
     nnoremap <silent> <leader>ev :tabedit $VIMRUNTIME/../../../Data/settings/_vimrc<cr>
@@ -277,7 +294,7 @@ vnoremap <m-j> "td"tp'[V']
 " Control-backspace deletes a word
 inoremap <c-bs> <esc>dbxi
 
-" Control-backspace deletes a word
+" Control-delete deletes a word
 inoremap <C-Del> <esc>dwi
 
 " Control-a selects all in v-line mode
@@ -290,6 +307,24 @@ inoremap <silent> <c-s> <esc>:update<cr>a
 
 " Map Y to act like D and C (To yank until EOL, rather than act as yy)
 nnoremap Y y$
+
+" Map gV to select previous visual selection
+nnoremap gV `[v`] 
+
+" Escape when writing jk in insert mode
+inoremap <silent> jk <esc>
+
+" Move cursor in insert mode
+" Left
+inoremap <c-h> <esc>i
+" Right
+inoremap <c-l> <esc>la
+" Up
+inoremap <c-k> <esc>ka
+" Down
+inoremap <c-j> <esc>ja
+
+
 
 " ============================== Ex command remap ==============================
 command! W w
@@ -339,6 +374,35 @@ function! QuickSetup()
     else
         echom "[*] ERROR: NO SPELL - Did not download dictionaries"  
     endif
+endfunction
+
+function! UploadVIMRC()
+    let l:vimrc_name = ""
+
+    if exists('g:vimrc_dir')
+        cd g:vimrc_dir
+        let l:vimrc_name = ".vimrc"
+    elseif has('gui_running')
+        cd $VIMRUNTIME/../../../Data/settings
+        let l:vimrc_name = "_vimrc"
+    else
+        cd $HOME/
+        let l:vimrc_name = ".vimrc"
+    endif
+    echom "Selected VIMRC name and directory"
+
+    execute "!git clone https://github.com/M4rqu1705/vimrc"
+    echom "Dowloaded VIMRC repository"
+    execute "!cp " . l:vimrc_name . " vimrc/.vimrc"
+    echom "Copied current vimrc to repository"
+    cd vimrc
+    execute "!git add ."
+    execute "!git commit"
+    execute "!git push -fu origin master"
+    echom "Uploaded most recent vimrc!"
+    execute "!rm -rf vimrc"
+    echom "Deleted local repository"
+
 endfunction
 
 function! Eatchar(pat)
@@ -421,6 +485,21 @@ function! DeleteUnlistedBuffers()
     execute "bwipeout! " . join(filter(range(1, bufnr('$')), 'buflisted(v:val) == 0'), " ")
 endfunction
 
+" Function used to change the present working directory to the current file's
+function! CDCurrent()
+    execute "cd %:p:h"
+endfunction
+
+" Function used to locally change the present working directory to the current file's
+function! LCDCurrent()
+    execute "lcd %:p:h"
+endfunction
+
+" Function used to change the present working directory to the current file's
+function! ChangeToCurrentDirectory()
+    execute "cd %:p:h"
+endfunction
+
 " Function used to clear all registers quickly
 function! ClearAllRegisters()
     let regs=split('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789/-"*', '\zs')
@@ -448,8 +527,7 @@ function! RunCode()
                 execute "vert term ++kill=term python " . l:full_path
             endif
 
-            " execute l:current_buffer . "wincmd w"
-
+            " execute l:current_buffer ."wincmd w"
 
         elseif &ft == 'javascript'
             echo("JS")
@@ -491,8 +569,10 @@ function! AdjustFontSize(amount)
     endif
 endfunction
 
-nnoremap <silent> <leader>= :call AdjustFontSize(1)<cr>
-nnoremap <silent> <leader>- :call AdjustFontSize(-1)<cr>
+nnoremap <silent> <m-.> :call AdjustFontSize(-1)<cr>
+nnoremap <silent> <m-,> :call AdjustFontSize(-1)<cr>
+" nnoremap <silent> <leader>= :call AdjustFontSize(1)<cr>
+" nnoremap <silent> <leader>- :call AdjustFontSize(-1)<cr>
 
 " ================================= Terminal ==================================
 
@@ -553,6 +633,7 @@ Plug 'webdevel/tabulous'
 
 Plug 'w0rp/ale'
 " Plug 'skywind3000/asyncrun.vim'
+Plug 'ctrlpvim/ctrlp.vim'
 
 Plug 'jiangmiao/auto-pairs'
 Plug 'scrooloose/nerdcommenter'
@@ -745,6 +826,10 @@ let g:ale_linters = {
 nmap <silent> <leader>aj :ALENext<cr>
 nmap <silent> <leader>ak :ALEPrevious<cr>
 
+" =================================== Ctrl-P ===================================
+let g:ctrlp_match_window = 'bottom,order:ttb,min:1,max:10,results:10'
+let g:ctrlp_tabpage_position = 'ac'
+
 
 " ================================= winresizer =================================
 let g:winresizer_enable = 1
@@ -773,19 +858,23 @@ nnoremap <silent> <leader>cc :call NERDComment('n', 'invert')<cr>
 vnoremap <silent> <leader>cc :call NERDComment('x', 'invert')<cr>
 nnoremap <silent> <leader>ca :call NERDComment('n', 'comment')<cr>
 vnoremap <silent> <leader>ca :call NERDComment('x', 'comment')<cr>
-nnoremap <silent> <leader>cd :call NERDComment('n', 'uncomment')<cr>
-vnoremap <silent> <leader>cd :call NERDComment('x', 'uncomment')<cr>
+" nnoremap <silent> <leader>cd :call NERDComment('n', 'uncomment')<cr>
+" vnoremap <silent> <leader>cd :call NERDComment('x', 'uncomment')<cr>
 nnoremap <silent> <leader>cy :call NERDComment('n', 'yank')<cr>
 vnoremap <silent> <leader>cy :call NERDComment('x', 'yank')<cr>
 
 
 " ================================= auto-pairs =================================
 let g:AutoPairsFlyMode = 0
+let g:AutoPairsMapCh = 0
+
+
 if has('autocmd')
     autocmd VimEnter unmap <M-p>
     autocmd VimEnter unmap <M-e>
     autocmd VimEnter unmap <M-n>
     autocmd VimEnter unmap <M-b>
+    autocmd VimEnter unmap <c-h>
 else
     echom "[*] ERROR: NO AUTOCMD - Could not unmap unwanted auto-pairs shortcuts"
 endif
