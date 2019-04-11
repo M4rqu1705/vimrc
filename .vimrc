@@ -1,6 +1,43 @@
-set nocompatible                " vi compatible is LAME
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" Contents:
+"       -> Diff
+"       -> Buffers
+"       -> Windows
+"       -> Dictionaries
+"       -> Templates
+"       -> Interface
+"       -> GUI
+"       -> Whitespace
+"       -> Searching
+"       -> History and file handling
+"       -> Backup and Swap Files
+"       -> Keys
+"       -> Autocomplete
+"       -> Code folding
+"       -> Sessions
+"       -> User defined mappings
+"       -> Ex command remap
+"       -> Custom functions
+"       -> Terminal
+"       -> Plugins
+"       -> Emmet
+"       -> Matchit
+"       -> Lightline
+"       -> NETRW
+"       -> Themes
+"       -> ALE
+"       -> Ctrl-P
+"       -> Winresizer
+"       -> NerdCommenter
+"       -> AutoPairs
+"       -> EasyMotion
+"       -> Startify
+"
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-" Diff
+
+set nocompatible                " vi compatible is LAME
+" Diff {{{
 if has('autocmd')
 
     "Remember the positions in files with some git-specific exceptions"
@@ -51,17 +88,28 @@ endif
     silent execute '!' . cmd . ' ' . opt . arg1 . ' ' . arg2 . ' > ' . arg3 . eq
 endfunction
 
+" Diff commands
+" do => diff obtain
+" dp => diff put
+" [c => previous diff
+" ]c => following diff
 
-" ================================== Buffers ==================================
+
+" }}}
+" Buffers {{{
 set hidden
 set viminfo='999,<50,s10,h,%,/0,:99,@99
 filetype plugin indent on
 
-" ================================== Windows ==================================
+
+" }}}
+" Windows {{{
 set splitbelow
 set splitright
 
-" ================================ Dictionaries ================================
+
+" }}}
+" Dictionaries {{{
 if has('spell')
     set dictionary=$VIMRUNTIME/spell
     set spell spelllang=en,es
@@ -89,7 +137,22 @@ let &termencoding = &encoding
 let &fileencoding = &encoding
 let &fileencodings = &encoding
 
-" ================================= Interface ================================= 
+
+" }}}
+" Templates {{{
+if has("autocmd")
+    augroup templates
+        autocmd!
+
+        " Python files
+        autocmd BufNewFile *.py 0r $VIMRUNTIME/templates/skeleton.py
+
+    augroup END
+endif
+
+
+" }}}
+ " Interface {{{
 set number                      " Add line numbers
 set numberwidth=5               " Set line number width
 set noshowmode                  " Do not show the current mode
@@ -116,10 +179,12 @@ if has('mouse')
     set mouse=a
 endif
 
-" ==================================== GUI ====================================
+
+" }}}
+" GUI {{{
 if has("gui_running")
     set guioptions=cRLhb            " Remove menubar and other disturbing items in gVIM
-    set guifont=Lucida_Console:h19qANTIALIASED
+    set guifont=Lucida_Console:h17qANTIALIASED
     set t_Co=256
     set cursorline                  " Highlight line with cursor
     " Maximize the screen on enter if has autocmd
@@ -131,7 +196,8 @@ if has("gui_running")
 endif
 
 
-" ================================= Whitespace =================================
+" }}}
+" Whitespace {{{
 set autoindent                          " set auto-indenting on for programming
 set wrap
 set wrapmargin=2
@@ -156,14 +222,18 @@ set expandtab                           " On pressing tab, insert 4 spaces
 set noshiftround
 set nostartofline
 
-" ================================= Searching =================================
+
+" }}}
+" Searching {{{
 set incsearch
 set ignorecase
 set smartcase
 set showmatch                   " automatically show matching brackets.  
 set magic
 
-" ========================= History and file handling =========================
+
+" }}}
+" History and file handling {{{
 set history=999             " Increase history (default = 20)
 set undolevels=999          " More undo (default=100)
 if has('persistent_undo')
@@ -174,16 +244,22 @@ else
     echom "[*] ERROR: NO PERSISTENT UNDO - Could not set up persistent undo"
 endif
 
-" =========================== Backup and Swap Files ===========================
+
+" }}}
+" Backup and Swap Files {{{
 set nobackup
 set nowritebackup
 set noswapfile
 
-" =================================== Keys ====================================
+
+" }}}
+" Keys {{{
 set backspace=indent,eol,start  " allow backspacing over everything.
 set timeoutlen=2000              " how long it wait for mapped commands
 
-" ========================== Use TAB to autocomplete ==========================
+
+" }}}
+" Autocomplete {{{
 set omnifunc=syntaxcomplete#Complete
 set complete=.,w,b,d,u,t
 set completeopt=longest,menuone,preview
@@ -210,17 +286,27 @@ inoremap <silent> <Tab> <C-R>=Tab_Or_Complete()<CR>
 inoremap <expr> <s-tab> pumvisible() ? "\<c-o>" : "\<c-x>\<c-o>"
 
 
-" ================================ Code folding ===============================
+" }}}
+" Code folding {{{
 if has('folding')
     set foldenable              " Enable code folding and show all folds
     set foldmethod=manual       " Folds are based on indent level
     set foldlevelstart=10       " Number of fold levels to be opened at enter
     set foldnestmax=10
+    set modelines=1
 else
     echom "[*] Error: NO FOLDING Could not configure code folding"
 endif
+" zO opens current fold recursively
+" zC closes current fold recursively
+" zR opens all folds recursively
+" zM closes all folds recursively
+" zd deletes current fold
+" zE deletes all folds
 
-" ================================== Sessions =================================
+
+" }}}
+" Sessions {{{
 if has('mksession')
     if has('autocmd')
         augroup vim_session
@@ -245,7 +331,9 @@ else
     echom "[*] ERROR: NO SESSIONS - Could not configure vim sessions"
 endif
 
-" =========================== User defined mappings ===========================
+
+" }}}
+" User defined mappings {{{
 
 " Make ',' leader for commands
 let mapleader = ","
@@ -325,8 +413,8 @@ inoremap <c-k> <esc>ka
 inoremap <c-j> <esc>ja
 
 
-
-" ============================== Ex command remap ==============================
+" }}}
+" Ex command remap {{{
 command! W w
 command! Q q
 command! WQ wq
@@ -338,42 +426,75 @@ command! Q q
 command! Qa qa
 command! QA qa
 
-" ============================== Custom functions ==============================
+
+" }}}
+" Custom functions {{{
 
 " Install required dictionary files and vim plug automatically to the 
 " corresponding destinations 
 function! QuickSetup()
-    " Install Vim-Plug and install all plugins 
-    let l:destination = expand('$VIMRUNTIME/autoload')
-    execute "!wget https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim -P " . l:destination
-    execute "PlugInstall"
 
-    " Install all spell files
-    if has('spell')
-        let l:destination = expand('$VIMRUNTIME/spell')
-
-        " English ascii dictionary and suggestion file
-        execute "!wget ftp.vim.org/vim/runtime/spell/en.ascii.spl -P " . l:destination
-        execute "!wget ftp.vim.org/vim/runtime/spell/en.ascii.sug -P " . l:destination
-
-        " English latin1 dictionary and suggestion file
-        execute "!wget ftp.vim.org/vim/runtime/spell/en.latin1.spl -P " . l:destination
-        execute "!wget ftp.vim.org/vim/runtime/spell/en.latin1.sug -P " . l:destination
-
-        " English utf-8 dictionary and suggestion file
-        execute "!wget ftp.vim.org/vim/runtime/spell/en.utf-8.spl -P " . l:destination
-        execute "!wget ftp.vim.org/vim/runtime/spell/en.utf-8.sug -P " . l:destination
-
-        " Spanish latin1 dictionary and suggestion file
-        execute "!wget ftp.vim.org/vim/runtime/spell/es.latin1.spl -P " . l:destination
-        execute "!wget ftp.vim.org/vim/runtime/spell/es.latin1.sug -P " . l:destination
-
-        " Spanish utf-8 dictionary and suggestion file
-        execute "!wget ftp.vim.org/vim/runtime/spell/es.utf-8.spl -P " . l:destination
-        execute "!wget ftp.vim.org/vim/runtime/spell/es.utf-8.sug -P " . l:destination
+    if confirm("Do you want to download Vim Plug?", "&Yes\n&No") == 1
+        let l:destination = fnameescape(expand('$VIMRUNTIME/autoload'))
+        execute "!wget https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim -P " . l:destination
+        execute "PlugInstall"
     else
-        echom "[*] ERROR: NO SPELL - Did not download dictionaries"  
+        echom "[*] Did not install Vim Plug"
     endif
+
+    if confirm("Do you want to create templates/skeleton files?", "&Yes\n&No") == 1
+        let l:destination = fnameescape(expand("$VIMRUNTIME/templates"))
+        if !isdirectory(l:destination)
+            execute "!mkdir " . l:destination
+        endif
+
+        let l:contents = "#!/usr/bin/env python\n" .
+                    \ "# -*- coding: utf-8 -*-\n\n" .
+                    \ "'''\n" .
+                    \ "Docstring goes here\n" .
+                    \ "'''\n\n" .
+                    \ "__author__ = 'Marcos R. Pesante Colón'\n" .
+                    \ "__email__ = 'm4rc05.dev@gmail.com'\n" .
+                    \ "__date__ = ''\n" .
+                    \ "__license__ = 'GNU GPL V.3'\n" .
+                    \ "__version__ = '1.0'\n"
+
+        execute "tabnew " . l:destination . "/skeleton.py | normal! ggVGc" . l:contents . "\<esc>:wq!\<cr>"
+
+    else
+        echom "[*] Did not create templates/skeleton files"
+    endif
+
+    if confirm("Do you want to download spell files?", "&Yes\n&No") == 1
+        if has('spell')
+            let l:destination = expand('$VIMRUNTIME/spell')
+
+            " English ascii dictionary and suggestion file
+            execute "!wget ftp.vim.org/vim/runtime/spell/en.ascii.spl -P " . l:destination
+            execute "!wget ftp.vim.org/vim/runtime/spell/en.ascii.sug -P " . l:destination
+
+            " English latin1 dictionary and suggestion file
+            execute "!wget ftp.vim.org/vim/runtime/spell/en.latin1.spl -P " . l:destination
+            execute "!wget ftp.vim.org/vim/runtime/spell/en.latin1.sug -P " . l:destination
+
+            " English utf-8 dictionary and suggestion file
+            execute "!wget ftp.vim.org/vim/runtime/spell/en.utf-8.spl -P " . l:destination
+            execute "!wget ftp.vim.org/vim/runtime/spell/en.utf-8.sug -P " . l:destination
+
+            " Spanish latin1 dictionary and suggestion file
+            execute "!wget ftp.vim.org/vim/runtime/spell/es.latin1.spl -P " . l:destination
+            execute "!wget ftp.vim.org/vim/runtime/spell/es.latin1.sug -P " . l:destination
+
+            " Spanish utf-8 dictionary and suggestion file
+            execute "!wget ftp.vim.org/vim/runtime/spell/es.utf-8.spl -P " . l:destination
+            execute "!wget ftp.vim.org/vim/runtime/spell/es.utf-8.sug -P " . l:destination
+        else
+            echom "[*] ERROR: NO SPELL - Did not download dictionaries"  
+        endif
+    else
+        echom "[*] Did not download spell files"
+    endif
+
 endfunction
 
 
@@ -426,9 +547,9 @@ function! UploadVIMRC()
 
 endfunction
 
-" Upload current local vimrc to github repository
+" Download current VIMRC in github to VIM 
 function! DownloadVIMRC()
-    " Useless comment
+
     " Prepare a vimrc_name variable with greater scope
     let l:vimrc_name = ""
     " Prepare a current_directory variable to return to it after the function
@@ -606,16 +727,15 @@ endfunction
 nnoremap <silent> <c-enter> :call RunCode()<cr>
 
 
-function! AdjustFontSize(amount)
+function! SetFontSize(size)
     if has('gui_running')
 
         let l:minfontsize = 10
-        let l:maxfontsize = 30
+        let l:maxfontsize = 40
         let l:fontname = substitute(&guifont,  '\(\S*\):h\(\d\d\)\(\S*\)', '\1', '')
-        let l:cursize = substitute(&guifont, '\(\S*\):h\(\d\d\)\(\S*\)', '\2', '')
         let l:information = substitute(&guifont, '\(\S*\):h\(\d\d\)\(\S*\)', '\3', '')
 
-        let l:newsize = l:cursize + a:amount
+        let l:newsize = a:size
         if(l:newsize < l:minfontsize)
             let l:newsize = l:minfontsize
         elseif(l:maxfontsize < l:newsize)
@@ -630,12 +750,18 @@ function! AdjustFontSize(amount)
     endif
 endfunction
 
-nnoremap <silent> <m-.> :call AdjustFontSize(-1)<cr>
-nnoremap <silent> <m-,> :call AdjustFontSize(-1)<cr>
-" nnoremap <silent> <leader>= :call AdjustFontSize(1)<cr>
-" nnoremap <silent> <leader>- :call AdjustFontSize(-1)<cr>
+function! AdjustFontSize(amount)
+    let l:cursize = substitute(&guifont, '\(\S*\):h\(\d\d\)\(\S*\)', '\2', '')
+    call SetFontSize(l:cursize + a:amount)
 
-" ================================= Terminal ==================================
+endfunction
+
+nnoremap <silent> <m-.> :call AdjustFontSize(1)<cr>
+nnoremap <silent> <m-,> :call AdjustFontSize(-1)<cr>
+
+
+" }}}
+" Terminal {{{
 
 if has("terminal")
     " Use escape key instead of strange combination
@@ -682,7 +808,8 @@ if has('python_dynamic')
 endif
 
 
-" ================================== Plugins ==================================
+" }}}
+" Plugins {{{
 
 call plug#begin('$VIMRUNTIME/plugged')
 
@@ -716,31 +843,8 @@ Plug 'mhinz/vim-startify'
 call plug#end()
 
 
-" ================================ Vim Surround ================================
-if has('autocmd') 
-    augroup vim_surround
-        autocmd!
-
-        " Map change surrounding to <leader>cs and eliminate the cs command
-        autocmd VimEnter nmap <leader>cs cs 
-
-        " Map delete surrounding to <leader>ds and eliminate the ds command
-        autocmd VimEnter nmap <leader>ds ds
-
-        " Map add surrounding to <leader>as and eliminate ysiw
-        autocmd VimEnter nmap <leader>as ys
-
-        " Map surround line to <leader>sl and eliminate yss
-        autocmd VimEnter nmap <leader>sl yss
-
-        " Map surround selection to <leader>s and eliminate S
-        autocmd VimEnter imap <leader>s S
-    augroup END
-else
-    echom "[*] ERROR: NO AUTOCMD - Could not map vim_surround command"
-endif
-
-" =================================== Emmet ===================================
+" }}}
+" Emmet {{{
 let g:user_emmet_install_global = 0
 " Only enable Emmet in normal mode functions.
 let g:user_emmet_mode='n'
@@ -757,13 +861,16 @@ else
 endif
 
 
-" ============================ Preinstalled matchit ===========================
+" }}}
+" Matchit {{{
 " Load matchit.vim, but only if the user hasn't installed a newer version.
 if !exists('g:loaded_matchit') && findfile('plugin/matchit.vim', &rtp) ==# ''
     runtime! macros/matchit.vim
 endif
 
-" ================================= lightline =================================
+
+" }}}
+" Lightline {{{
 let g:lightline = { 'colorscheme': 'wombat' }
 if has('autocmd')
     autocmd BufEnter * execute "call lightline#enable()" 
@@ -788,7 +895,9 @@ endif
 " set statusline+=%#SpellRare#
 " set statusline+=\ %P\ 
 
-" ================================== NETRW =================================
+
+" }}}
+" NETRW {{{
 " https://blog.stevenocchipinti.com/2016/12/28/using-netrw-instead-of-nerdtree-for-vim/
 " http://vimcasts.org/episodes/the-file-explorer/
 let g:netrw_banner = 0
@@ -827,41 +936,42 @@ if has('autocmd')
         autocmd filetype netrw nmap <buffer> <f5> <c-l>
 
 
-        " Other commands
-        " Shortcut               Command
-        "    c         change to current browsing directory
-        "    d         create new directory
-        "    D         Delete file
-        "    R         Rename file
-        "    o         Open file in horizontal split
-        "    p         Open file preview
-        "    t         Open file in new tab
-        "    v         Open file in vertical split
     augroup END
 else
     echom "[*] ERROR: NO AUTOCMD - Could not map netrw commands"
 endif
 
 
-" ================================ Molokai theme ==============================
+" Other commands
+" Shortcut               Command
+"    c         change to current browsing directory
+"    d         create new directory
+"    D         Delete file
+"    R         Rename file
+"    o         Open file in horizontal split
+"    p         Open file preview
+"    t         Open file in new tab
+"    v         Open file in vertical split
+
+
+" }}}
+" Themes {{{
 " colorscheme molokai
 " let g:molokai_original = 1
 
-" ================================ Tender theme ===============================
 " if has('autocmd') | autocmd VimEnter * colorscheme tender |
 " else | echom "[*] ERROR: NO AUTOCMD - Could not set the TENDER colorscheme" |
 " endif
 
-" =============================== One half theme ==============================
+
 if has('autocmd') | autocmd VimEnter * colorscheme onehalfdark |
 else | echom "[*] ERROR: NO AUTOCMD - Could not set the ONEHALFDARK colorscheme" |
 endif
 
 
-" ==================================== Ale ====================================
+" }}}
+" ALE {{{
 let g:ale_enabled = 1
-let g:ale_completion_enabled = 0
-let g:ale_echo_cursor = 1
 let g:ale_fix_on_save = 0
 let g:ale_lint_delay = 500
 let g:ale_lint_on_enter = 1
@@ -887,12 +997,15 @@ let g:ale_linters = {
 nmap <silent> <leader>aj :ALENext<cr>
 nmap <silent> <leader>ak :ALEPrevious<cr>
 
-" =================================== Ctrl-P ===================================
+
+" }}}
+" Ctrl-P {{{
 let g:ctrlp_match_window = 'bottom,order:ttb,min:1,max:10,results:10'
 let g:ctrlp_tabpage_position = 'ac'
 
 
-" ================================= winresizer =================================
+" }}}
+" Winresizer {{{
 let g:winresizer_enable = 1
 let g:winresizer_finish_with_escape = 1
 let g:winresizer_vert_resize = 5
@@ -908,7 +1021,8 @@ else
 endif
 
 
-" ================================ Nerdcommenter ===============================
+" }}}
+" NerdCommenter {{{
 let g:NERDSpaceDelims = 1
 let g:NERDCompactSexyComs = 0
 let g:NERDCommentEmptyLines = 0
@@ -923,12 +1037,10 @@ nnoremap <silent> <leader>cd :call NERDComment('n', 'uncomment')<cr>
 vnoremap <silent> <leader>cd :call NERDComment('x', 'uncomment')<cr>
 nnoremap <silent> <leader>cy :call NERDComment('n', 'yank')<cr>
 vnoremap <silent> <leader>cy :call NERDComment('x', 'yank')<cr>
-
-
-" ================================= auto-pairs =================================
+" }}}
+" AutoPairs {{{
 let g:AutoPairsFlyMode = 0
 let g:AutoPairsMapCh = 0
-
 
 if has('autocmd')
     autocmd VimEnter unmap <M-p>
@@ -941,13 +1053,15 @@ else
 endif
 
 
-" ================================= easymotion =================================
+" }}}
+" EasyMotion {{{
 nmap <leader><leader>s <Plug>(easymotion-overwin-f)
 nmap <leader><leader>l <Plug>(easymotion-overwin-line)
 nmap <leader><leader>w <Plug>(easymotion-overwin-w)
 
 
-" ================================== startify ==================================
+" }}}
+" Startify {{{
 let g:startify_session_dir = expand('$VIMRUNTIME/sessions') 
 let g:startify_lists = [
             \ {'type': 'sessions', 'header':['     Sessions']},
@@ -974,8 +1088,7 @@ let g:startify_custom_header = [
             \ s:startify_left_margin . '                                                                ',
             \ s:startify_left_margin . '                                                                ',
             \ ]
-
-
+" }}}
 
 
 
@@ -985,8 +1098,4 @@ elseif !empty(glob('C:/Users/m4rc0/Documents'))
     cd C:/Users/m4rc0/Documents
 endif
 
-" Diff commands
-" do => diff obtain
-" dp => diff put
-" [c => previous diff
-" ]c => following diff
+" vim:foldmethod=marker:foldlevel=0
