@@ -1,43 +1,212 @@
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-" Contents:
-"       -> Diff
-"       -> Buffers
-"       -> Windows
-"       -> Dictionaries
-"       -> Templates
-"       -> Interface
-"       -> GUI
-"       -> Whitespace
-"       -> Searching
-"       -> History and file handling
-"       -> Backup and Swap Files
-"       -> Keys
-"       -> Autocomplete
-"       -> Code folding
-"       -> Sessions
-"       -> User defined mappings
-"       -> Ex command remap
-"       -> Custom functions
-"       -> Terminal
-"       -> Plugins
-"       -> Emmet
-"       -> Matchit
-"       -> Lightline
-"       -> NETRW
-"       -> Themes
-"       -> ALE
-"       -> Ctrl-P
-"       -> Winresizer
-"       -> NerdCommenter
-"       -> AutoPairs
-"       -> EasyMotion
-"       -> Startify
-"
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-
-
 set nocompatible                " vi compatible is LAME
-" Diff {{{
+
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" I. Config
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" 1) Buffers {{{
+set hidden
+set viminfo='999,<50,s10,h,%,/0,:99,@99
+filetype plugin indent on
+
+
+" }}}
+" 2) Windows {{{
+set splitbelow
+set splitright
+
+
+" }}}
+" 3) Interface {{{
+set number                      " Add line numbers
+set numberwidth=5               " Set line number width
+set noshowmode                  " Do not show the current mode
+set showcmd                     " Show currently-typed command
+set title                       " Show tab titles
+syntax on                       " Turn syntax highlighting on by default
+set visualbell                  " Use visual bell instead of beeping when doing something wrong
+set laststatus=2                " Make the last line where the status is two lines deep so you can see status always
+set background=dark             " use colours that work well on a dark background (Console is usually black)
+set clipboard=unnamed           " Set clipboard to unnamed to access the system clipboard under windows
+set sidescrolloff=2             " Add space beside the cursor when going off screen 
+set scrolloff=2                 " Add space around the cursor when going off screen
+set binary                      " Used to edit binary files
+set ruler                       " show the cursor position all the time
+set confirm                     " Confirm commands instead of throwing errors
+set cmdheight=2                 " Make the ex command line 2 lines high
+set foldcolumn=1                " Add a little margin to the left
+set t_Co=256                    " Make sure Vim is using 256 colors
+set ttyfast                     " Smoother screen redraw
+set lazyredraw                  " The screen will not be redrawn so frequently 
+
+" Enable the use of mice if they are available
+if has('mouse')
+    set mouse=a
+endif
+
+" source $VIMRUNTIME/mswin.vim
+" behave mswin
+
+
+" }}}
+" 4) GUI {{{
+if has("gui_running")
+    set guioptions=cRLhb            " Remove menubar and other disturbing items in gVIM
+    set guifont=Lucida_Console:h17qANTIALIASED
+    set t_Co=256
+    set cursorline                  " Highlight line with cursor
+    " Maximize the screen on enter if has autocmd
+    if has('autocmd')
+        autocmd VimEnter * execute "simalt ~x"
+    else
+        echom "[*] ERROR: NO AUTOCMD - Did not maximize window"
+    endif
+endif
+
+
+" }}}
+" 5) Themes {{{
+" colorscheme molokai | let g:molokai_original = 1
+
+" if has('autocmd') | autocmd VimEnter * colorscheme tender |
+" else | echom "[*] ERROR: NO AUTOCMD - Could not set the TENDER colorscheme" |
+" endif
+
+
+if has('autocmd') | autocmd VimEnter * colorscheme onehalfdark |
+else | echom "[*] ERROR: NO AUTOCMD - Could not set the ONEHALFDARK colorscheme" |
+endif
+
+
+" }}}
+" 6) Searching {{{
+set incsearch           " Show temporary search results as being typed
+set ignorecase          " Case of normal letters is ignored
+set smartcase           " Ignore case when pattern contains lower-case letters
+set showmatch           " Automatically show matching brackets.  
+set magic               " Easier use of regex for searching
+
+
+" }}}
+" 7) Dictionaries {{{
+if has('spell')
+    set dictionary=$VIMRUNTIME/spell
+    set spell spelllang=en,es
+    set thesaurus+=$VIMRUNTIME/spell/en_thesaurus.txt
+else
+    echom "[*] ERROR: NO SPELL - Could not configure spell check"
+endif
+
+" For making everything UTF-8
+set encoding=utf-8
+let &termencoding = &encoding
+let &fileencoding = &encoding
+let &fileencodings = &encoding
+
+" ]s - Next spell error
+" [s - Previous spell error
+" zg - Add word to dictionary
+" zw - Remove word from dictionary
+
+
+" }}}
+" 8) History and file handling {{{
+set history=999             " Increase history (default = 20)
+set undolevels=999          " More undo (default=100)
+if has('persistent_undo')
+
+    let s:destination = fnameescape(expand("$VIMRUNTIME/temp/undos"))
+    if !isdirectory(s:destination)
+        execute "!mkdir " . s:destination
+    endif
+    set undodir=s:destination
+    set undofile
+else
+    echom "[*] ERROR: NO PERSISTENT UNDO - Could not set up persistent undo"
+endif
+
+
+" }}}
+" 9) Whitespace {{{
+set autoindent                          " Set auto-indenting on for programming
+set wrap
+set wrapmargin=2
+set textwidth=80 
+set linebreak
+set showbreak=\.\.\.\ 
+set nolist 
+set formatoptions=tcnBjq2     " Describes automatic formatting
+" t - Auto-wrap text using textwidth
+" c - Auto-wrap comments and insert comment leader in new line
+" n - Recognize numbered lists: format listpat
+" B - When joining lines do not add space between multi-byte characters 
+" j - When joining lines remove comment leaders
+" q - Format comments with gq
+" a - Automatic formatting of paragraphs
+" 2 - Indent second line of a paragraph for the rest of the paragraph 
+
+set virtualedit=insert
+set tabstop=4 softtabstop=4             " Show existing tab with 4 spaces width
+set shiftwidth=4                        " When indenting with '>', use 4 spaces width
+set expandtab                           " on pressing tab, insert 4 spaces
+set noshiftround
+set nostartofline
+
+
+" }}}
+" 10) Keys {{{
+set backspace=indent,eol,start      " Allow backspacing over everything.
+set timeoutlen=2000                 " How long it wait for mapped commands
+
+
+" }}}
+" 11) Autocomplete {{{
+set omnifunc=syntaxcomplete#Complete
+set complete=.,w,b,d,u,t
+set completeopt=longest,menuone,preview
+
+inoremap <expr> <CR> pumvisible() ? "\<C-y>" : "\<C-g>u\<CR>"
+inoremap <expr> <C-n> pumvisible() ? '<C-n>' :
+            \ '<C-n><C-r>=pumvisible() ? "\<lt>Down>" : ""<CR>'
+
+inoremap <expr> <a-,> pumvisible() ? '<C-n>' : '<C-x><C-o><C-n><C-p><C-r>=pumvisible() ? "\<lt>Down>" : ""<CR>'
+
+function! Tab_Or_Complete()
+    if col('.')>1 && strpart( getline('.'), col('.')-2, 3 ) =~ '^\w'
+        return "\<C-N>"
+    else
+        return "\<Tab>"
+    endif
+endfunction
+
+inoremap <silent> <Tab> <C-R>=Tab_Or_Complete()<CR>
+inoremap <expr> <s-tab> pumvisible() ? "\<c-o>" : "\<c-x>\<c-o>"
+
+" https://vim.fandom.com/wiki/Make_Vim_completion_popup_menu_work_just_like_in_an_IDE
+" https://medium.com/usevim/vim-101-completion-compendium-97b4ebc3a45a
+" https://news.ycombinator.com/item?id=13960147
+
+
+" }}}
+" 12) Code folding {{{
+if has('folding')
+    set foldenable              " Enable code folding and show all folds
+    set foldmethod=manual       " Folds are based on indent level
+    set foldlevelstart=10       " Number of fold levels to be opened at enter
+    set foldnestmax=10
+    set modelines=1
+else
+    echom "[*] Error: NO FOLDING Could not configure code folding"
+endif
+" zO opens current fold recursively
+" zC closes current fold recursively
+" zR opens all folds recursively
+" zM closes all folds recursively
+" zd deletes current fold
+" zE deletes all folds
+
+
+" }}}
+" 13) Diff {{{
 if has('autocmd')
 
     "Remember the positions in files with some git-specific exceptions"
@@ -62,9 +231,6 @@ if has('autocmd')
 
 endif
 
-" source $VIMRUNTIME/mswin.vim
-" behave mswin
-
 set diffexpr=MyDiff()
 function! MyDiff()
     let opt = '-a --binary '
@@ -88,225 +254,21 @@ endif
     silent execute '!' . cmd . ' ' . opt . arg1 . ' ' . arg2 . ' > ' . arg3 . eq
 endfunction
 
-" Diff commands
-" do => diff obtain
-" dp => diff put
-" [c => previous diff
-" ]c => following diff
+" do - diff obtain
+" dp - diff put
+" [c - previous diff
+" ]c - following diff
 
 
 " }}}
-" Buffers {{{
-set hidden
-set viminfo='999,<50,s10,h,%,/0,:99,@99
-filetype plugin indent on
-
-
-" }}}
-" Windows {{{
-set splitbelow
-set splitright
-
-
-" }}}
-" Dictionaries {{{
-if has('spell')
-    set dictionary=$VIMRUNTIME/spell
-    set spell spelllang=en,es
-
-    " Pressing ,ss will toggle and untoggle spell checking
-    nnoremap <leader>ss :setlocal spell!<cr>
-    " Go to next spell error
-    nmap <leader>sn ]s
-    " Go to previous spell error
-    nmap <leader>sp [s
-    " Add word to dictionary 
-    nmap <leader>sa zg
-    " Remove word from dictionary 
-    nmap <leader>sd zw
-    " Check for spelling suggestions
-    nmap <leader>sc z=
-else
-    echom "[*] ERROR: NO SPELL - Could not configure spell check"
-endif
-
-set thesaurus+=$VIMRUNTIME/spell/en_thesaurus.txt
-" For making everything UTF-8
-set encoding=utf-8
-let &termencoding = &encoding
-let &fileencoding = &encoding
-let &fileencodings = &encoding
-
-
-" }}}
-" Templates {{{
-if has("autocmd")
-    augroup templates
-        autocmd!
-
-        " Python files
-        autocmd BufNewFile *.py 0r $VIMRUNTIME/templates/skeleton.py
-
-    augroup END
-endif
-
-
-" }}}
- " Interface {{{
-set number                      " Add line numbers
-set numberwidth=5               " Set line number width
-set noshowmode                  " Do not show the current mode
-set showcmd                     " Show currently-typed command
-set title                       " Show tab titles
-syntax on                       " Turn syntax highlighting on by default
-set visualbell                  " Use visual bell instead of beeping when doing something wrong
-set laststatus=2                " Make the last line where the status is two lines deep so you can see status always
-set background=dark             " use colours that work well on a dark background (Console is usually black)
-set clipboard=unnamed           " Set clipboard to unnamed to access the system clipboard under windows
-set sidescrolloff=2             " Add space beside the cursor when going off screen 
-set scrolloff=2                 " Add space around the cursor when going off screen
-set binary                      " Used to edit binary files
-set ruler                       " show the cursor position all the time
-set confirm                     " Confirm commands instead of throwin errors
-set cmdheight=2                 " Make the ex command line 2 lines high
-set foldcolumn=1                " Add a little margin to the left
-set t_Co=256                    " Make sure Vim is using 256 colors
-set ttyfast                     " Smoother screen redraw
-set lazyredraw                  " The screen will not be redrawn so frequently 
-
-" Enable the use of mice if they are available
-if has('mouse')
-    set mouse=a
-endif
-
-
-" }}}
-" GUI {{{
-if has("gui_running")
-    set guioptions=cRLhb            " Remove menubar and other disturbing items in gVIM
-    set guifont=Lucida_Console:h17qANTIALIASED
-    set t_Co=256
-    set cursorline                  " Highlight line with cursor
-    " Maximize the screen on enter if has autocmd
-    if has('autocmd')
-        autocmd VimEnter * execute "simalt ~x"
-    else
-        echom "[*] ERROR: NO AUTOCMD - Did not maximize window"
-    endif
-endif
-
-
-" }}}
-" Whitespace {{{
-set autoindent                          " set auto-indenting on for programming
-set wrap
-set wrapmargin=2
-set textwidth=80 
-set linebreak
-set showbreak=\.\.\.\ 
-set nolist 
-set formatoptions=tcnBjq2     " Describes automatic formatting
-" t - Auto-wrap text using textwidth
-" c - Auto-wrap comments and insert comment leader in new line
-" n - Recognize numbered lists: format listpat
-" B - When joining lines do not add space between multi-byte characters 
-" j - When joining lines remove comment leaders
-" q - Format comments with gq
-" a - Automatic formatting of paragraphs
-" 2 - Indent second line of a paragraph for the rest of the paragraph 
-
-set virtualedit=insert
-set tabstop=4 softtabstop=4             " show existing tab with 4 spaces width
-set shiftwidth=4                        " when indenting with '>', use 4 spaces width
-set expandtab                           " On pressing tab, insert 4 spaces
-set noshiftround
-set nostartofline
-
-
-" }}}
-" Searching {{{
-set incsearch
-set ignorecase
-set smartcase
-set showmatch                   " automatically show matching brackets.  
-set magic
-
-
-" }}}
-" History and file handling {{{
-set history=999             " Increase history (default = 20)
-set undolevels=999          " More undo (default=100)
-if has('persistent_undo')
-    let s:undo_directory = expand('$VIMRUNTIME/temp/undos')
-    set undodir=l:undo_directory
-    set undofile
-else
-    echom "[*] ERROR: NO PERSISTENT UNDO - Could not set up persistent undo"
-endif
-
-
-" }}}
-" Backup and Swap Files {{{
+" 14) Backup and Swap Files {{{
 set nobackup
 set nowritebackup
 set noswapfile
 
 
 " }}}
-" Keys {{{
-set backspace=indent,eol,start  " allow backspacing over everything.
-set timeoutlen=2000              " how long it wait for mapped commands
-
-
-" }}}
-" Autocomplete {{{
-set omnifunc=syntaxcomplete#Complete
-set complete=.,w,b,d,u,t
-set completeopt=longest,menuone,preview
-
-" https://vim.fandom.com/wiki/Make_Vim_completion_popup_menu_work_just_like_in_an_IDE
-" https://medium.com/usevim/vim-101-completion-compendium-97b4ebc3a45a
-" https://news.ycombinator.com/item?id=13960147
-
-inoremap <expr> <CR> pumvisible() ? "\<C-y>" : "\<C-g>u\<CR>"
-inoremap <expr> <C-n> pumvisible() ? '<C-n>' :
-            \ '<C-n><C-r>=pumvisible() ? "\<lt>Down>" : ""<CR>'
-
-inoremap <expr> <a-,> pumvisible() ? '<C-n>' : '<C-x><C-o><C-n><C-p><C-r>=pumvisible() ? "\<lt>Down>" : ""<CR>'
-
-function! Tab_Or_Complete()
-    if col('.')>1 && strpart( getline('.'), col('.')-2, 3 ) =~ '^\w'
-        return "\<C-N>"
-    else
-        return "\<Tab>"
-    endif
-endfunction
-
-inoremap <silent> <Tab> <C-R>=Tab_Or_Complete()<CR>
-inoremap <expr> <s-tab> pumvisible() ? "\<c-o>" : "\<c-x>\<c-o>"
-
-
-" }}}
-" Code folding {{{
-if has('folding')
-    set foldenable              " Enable code folding and show all folds
-    set foldmethod=manual       " Folds are based on indent level
-    set foldlevelstart=10       " Number of fold levels to be opened at enter
-    set foldnestmax=10
-    set modelines=1
-else
-    echom "[*] Error: NO FOLDING Could not configure code folding"
-endif
-" zO opens current fold recursively
-" zC closes current fold recursively
-" zR opens all folds recursively
-" zM closes all folds recursively
-" zd deletes current fold
-" zE deletes all folds
-
-
-" }}}
-" Sessions {{{
+" 15) Sessions {{{
 if has('mksession')
     if has('autocmd')
         augroup vim_session
@@ -333,7 +295,73 @@ endif
 
 
 " }}}
-" User defined mappings {{{
+" 16) Templates {{{
+if has("autocmd")
+    augroup templates
+        autocmd!
+
+        " Python files
+        autocmd BufNewFile *.py 0r $VIMRUNTIME/templates/skeleton.py
+
+    augroup END
+endif
+
+
+" }}}
+" 17) Terminal {{{
+
+if has("terminal")
+    " Use escape key instead of strange combination
+    tnoremap <esc> <C-\><C-n>
+
+    " Use git-cmd instead of the system-default windows cmd
+    let g:git_cmd_dir = expand('$VIMRUNTIME/../../../Programming/Git/git-cmd.exe')
+
+    " Prepare command mode mappings which make the use of 'term' less lengthy 
+    cnoreabbrev term execute "vert term ++kill=term " . g:git_cmd_dir
+    cnoreabbrev hterm execute "term ++kill=term " . g:git_cmd_dir
+    cnoreabbrev tterm execute "tabnew<bar>term ++kill=term ++curwin " . g:git_cmd_dir
+
+    " Prepare PATH variables for ... 
+    " Git
+    let s:git_full_path = expand('$VIMRUNTIME/../../../Programming/Git/bin') . ";" . expand(' $VIMRUNTIME/../../../Programming/Git/usr/bin') . ";"
+    " Python
+    let s:python_full_path = expand('$VIMRUNTIME/../../../Programming/WPy-3710/python-3.7.1') . ";"
+
+    if has('autocmd')
+        augroup set_path
+            " Only add git to path if it isn't already in PATH 
+            if $PATH !~? "git"
+                autocmd SourcePre * let $PATH = s:git_full_path . $PATH
+            endif
+
+            " Only add python to path if it isn't already in PATH 
+            if $PATH !~? "python" && $PATH !~? "conda" && $PATH !~? "WPy-3710"
+                autocmd SourcePre * let $PATH = s:python_full_path . $PATH
+            endif
+        augroup END
+    else
+        echom "[*] ERROR: NO AUTOCMD - Could not update PATH environment variable"
+    endif
+
+else
+    echom "[*] ERROR: NO TERMINAL - Could not configure terminal settings"
+endif
+
+" Set the python3 home and dll directory, crucial to use python in Vim
+if has('python_dynamic')
+    set pythonthreehome=$VIMRUNTIME/../../../Programming/WPy-3710/python-3.7.1
+    set pythonthreedll=$VIMRUNTIME/../../../Programming/WPy-3710/python-3.7.1/python37.dll
+endif
+
+
+" }}}
+
+
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" II. User defined mappings
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" 1) Mappings {{{
 
 " Make ',' leader for commands
 let mapleader = ","
@@ -412,23 +440,34 @@ inoremap <c-k> <esc>ka
 " Down
 inoremap <c-j> <esc>ja
 
+" 'Inside fold' text object 
+onoremap iz :<c-u>normal! [zV]z<cr>
+
 
 " }}}
-" Ex command remap {{{
+" 2) Ex command remap {{{
 command! W w
 command! Q q
 command! WQ wq
 command! Wq wq
-command! WQa wqa
-command! Wqa wqa
-command! WQA wqa
-command! Q q
-command! Qa qa
 command! QA qa
+command! Qa qa
+command! WQA wqa
+command! WQa wqa
+command! WqA wqa
+command! Wqa wqa
+
+command! CdHere call CDCurrent()
+command! LcdHere call LCDCurrent()
+command! QuickSetup call QuickSetup()
+command! UploadVIMRC call UploadVIMRC()
+command! DownloadVIMRC call DownloadVIMRC()
+command! ClearAllRegisters call ClearAllRegisters()
+command! DeleteUnlistedBuffers call DeleteUnlistedBuffers()
 
 
 " }}}
-" Custom functions {{{
+" 3) Custom functions {{{
 
 " Install required dictionary files and vim plug automatically to the 
 " corresponding destinations 
@@ -439,7 +478,7 @@ function! QuickSetup()
         execute "!wget https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim -P " . l:destination
         execute "PlugInstall"
     else
-        echom "[*] Did not install Vim Plug"
+        echom "[*] Did not install Vim Plug\n"
     endif
 
     if confirm("Do you want to create templates/skeleton files?", "&Yes\n&No") == 1
@@ -462,7 +501,7 @@ function! QuickSetup()
         execute "tabnew " . l:destination . "/skeleton.py | normal! ggVGc" . l:contents . "\<esc>:wq!\<cr>"
 
     else
-        echom "[*] Did not create templates/skeleton files"
+        echom "[*] Did not create templates/skeleton files\n"
     endif
 
     if confirm("Do you want to download spell files?", "&Yes\n&No") == 1
@@ -492,7 +531,7 @@ function! QuickSetup()
             echom "[*] ERROR: NO SPELL - Did not download dictionaries"  
         endif
     else
-        echom "[*] Did not download spell files"
+        echom "[*] Did not download spell files\n"
     endif
 
 endfunction
@@ -533,7 +572,7 @@ function! UploadVIMRC()
                     \ "git commit && " .
                     \ "git push -fu origin master"
     else
-        echom "[*] Cancelled VIMRC upload!"
+        echom "[*] Cancelled VIMRC upload!\n"
     endif
 
     " Go back to user's vimrc directory
@@ -575,7 +614,7 @@ function! DownloadVIMRC()
         " Copy contents of the downloaded vimrc to the current one 
         execute "!cp vimrc/.vimrc " . l:vimrc_name
     else
-        echom "[*] Cancelled VIMRC replacement!"
+        echom "[*] Cancelled VIMRC replacement!\n"
     endif
 
     " Delete local repository
@@ -677,11 +716,6 @@ function! LCDCurrent()
     execute "lcd %:p:h"
 endfunction
 
-" Function used to change the present working directory to the current file's
-function! ChangeToCurrentDirectory()
-    execute "cd %:p:h"
-endfunction
-
 " Function used to clear all registers quickly
 function! ClearAllRegisters()
     let regs=split('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789/-"*', '\zs')
@@ -753,7 +787,6 @@ endfunction
 function! AdjustFontSize(amount)
     let l:cursize = substitute(&guifont, '\(\S*\):h\(\d\d\)\(\S*\)', '\2', '')
     call SetFontSize(l:cursize + a:amount)
-
 endfunction
 
 nnoremap <silent> <m-.> :call AdjustFontSize(1)<cr>
@@ -761,55 +794,12 @@ nnoremap <silent> <m-,> :call AdjustFontSize(-1)<cr>
 
 
 " }}}
-" Terminal {{{
-
-if has("terminal")
-    " Use escape key instead of strange combination
-    tnoremap <esc> <C-\><C-n>
-
-    " Use git-cmd instead of the system-default windows cmd
-    let g:git_cmd_dir = expand('$VIMRUNTIME/../../../Programming/Git/git-cmd.exe')
-
-    " Prepare command mode mappings which make the use of 'term' less lengthy 
-    cnoreabbrev term execute "vert term ++kill=term " . g:git_cmd_dir
-    cnoreabbrev hterm execute "term ++kill=term " . g:git_cmd_dir
-    cnoreabbrev tterm execute "tabnew<bar>term ++kill=term ++curwin " . g:git_cmd_dir
-
-    " Prepare PATH variables for ... 
-    " Git
-    let s:git_full_path = expand('$VIMRUNTIME/../../../Programming/Git/bin') . ";" . expand(' $VIMRUNTIME/../../../Programming/Git/usr/bin') . ";"
-    " Python
-    let s:python_full_path = expand('$VIMRUNTIME/../../../Programming/WPy-3710/python-3.7.1') . ";"
-
-    if has('autocmd')
-        augroup set_path
-            " Only add git to path if it isn't already in PATH 
-            if $PATH !~? "git"
-                autocmd SourcePre * let $PATH = s:git_full_path . $PATH
-            endif
-
-            " Only add python to path if it isn't already in PATH 
-            if $PATH !~? "python" && $PATH !~? "conda" && $PATH !~? "WPy-3710"
-                autocmd SourcePre * let $PATH = s:python_full_path . $PATH
-            endif
-        augroup END
-    else
-        echom "[*] ERROR: NO AUTOCMD - Could not update PATH environment variable"
-    endif
-
-else
-    echom "[*] ERROR: NO TERMINAL - Could not configure terminal settings"
-endif
-
-" Set the python3 home and dll directory, crucial to use python in Vim
-if has('python_dynamic')
-    set pythonthreehome=$VIMRUNTIME/../../../Programming/WPy-3710/python-3.7.1
-    set pythonthreedll=$VIMRUNTIME/../../../Programming/WPy-3710/python-3.7.1/python37.dll
-endif
 
 
-" }}}
-" Plugins {{{
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" III. Plugins
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" 1) Setup {{{
 
 call plug#begin('$VIMRUNTIME/plugged')
 
@@ -844,7 +834,65 @@ call plug#end()
 
 
 " }}}
-" Emmet {{{
+" 2) ALE {{{
+let g:ale_enabled = 1
+let g:ale_fix_on_save = 0
+let g:ale_lint_delay = 500
+let g:ale_lint_on_enter = 1
+let g:ale_lint_on_insert_leave = 1
+let g:ale_lint_on_save = 1
+let g:ale_lint_on_text_changed = 'never'
+let g:ale_list_vertical = 1
+let g:ale_set_highlights = 1
+let g:ale_warn_about_trailing_whitespace = 1
+let g:ale_virtualtext_cursor = 1
+
+let g:ale_sign_error = '×'
+
+let g:ale_linters = {
+            \ 'python': ['pyflakes'],
+            \ 'javascript': ['eslint']
+            \ }
+
+" nmap <silent> <leader>gd :ALEGoToTypeDefinitionInVSplit<cr>
+" nmap <silent> <leader>gdt :ALEGoToTypeDefinitionInTab<cr>
+" nmap <silent> <leader>gds :ALEGoToTypeDefinitionInSplit<cr>
+" nmap <silent> <leader>fr :ALEFindReferences<cr>
+nmap <silent> <leader>aj :ALENext<cr>
+nmap <silent> <leader>ak :ALEPrevious<cr>
+
+
+" }}}
+" 3) AutoPairs {{{
+let g:AutoPairsFlyMode = 0
+let g:AutoPairsMapCh = 0
+
+if has('autocmd')
+    autocmd VimEnter unmap <M-p>
+    autocmd VimEnter unmap <M-e>
+    autocmd VimEnter unmap <M-n>
+    autocmd VimEnter unmap <M-b>
+    autocmd VimEnter unmap <c-h>
+else
+    echom "[*] ERROR: NO AUTOCMD - Could not unmap unwanted auto-pairs shortcuts"
+endif
+
+
+" }}}
+" 4) Ctrl-P {{{
+let g:ctrlp_match_window = 'bottom,order:ttb,min:1,max:10,results:10'
+let g:ctrlp_tabpage_position = 'ac'
+
+
+" }}}
+" 5) EasyMotion {{{
+nmap <leader><leader>s <Plug>(easymotion-overwin-f)
+nmap <leader><leader>l <Plug>(easymotion-overwin-line)
+nmap <leader><leader>w <Plug>(easymotion-overwin-w)
+
+
+" }}}
+" 6) Emmet {{{
 let g:user_emmet_install_global = 0
 " Only enable Emmet in normal mode functions.
 let g:user_emmet_mode='n'
@@ -862,15 +910,7 @@ endif
 
 
 " }}}
-" Matchit {{{
-" Load matchit.vim, but only if the user hasn't installed a newer version.
-if !exists('g:loaded_matchit') && findfile('plugin/matchit.vim', &rtp) ==# ''
-    runtime! macros/matchit.vim
-endif
-
-
-" }}}
-" Lightline {{{
+" 7) Lightline {{{
 let g:lightline = { 'colorscheme': 'wombat' }
 if has('autocmd')
     autocmd BufEnter * execute "call lightline#enable()" 
@@ -897,7 +937,15 @@ endif
 
 
 " }}}
-" NETRW {{{
+" 8) Matchit {{{
+" Load matchit.vim, but only if the user hasn't installed a newer version.
+if !exists('g:loaded_matchit') && findfile('plugin/matchit.vim', &rtp) ==# ''
+    runtime! macros/matchit.vim
+endif
+
+
+" }}}
+" 9) NETRW {{{
 " https://blog.stevenocchipinti.com/2016/12/28/using-netrw-instead-of-nerdtree-for-vim/
 " http://vimcasts.org/episodes/the-file-explorer/
 let g:netrw_banner = 0
@@ -955,74 +1003,7 @@ endif
 
 
 " }}}
-" Themes {{{
-" colorscheme molokai
-" let g:molokai_original = 1
-
-" if has('autocmd') | autocmd VimEnter * colorscheme tender |
-" else | echom "[*] ERROR: NO AUTOCMD - Could not set the TENDER colorscheme" |
-" endif
-
-
-if has('autocmd') | autocmd VimEnter * colorscheme onehalfdark |
-else | echom "[*] ERROR: NO AUTOCMD - Could not set the ONEHALFDARK colorscheme" |
-endif
-
-
-" }}}
-" ALE {{{
-let g:ale_enabled = 1
-let g:ale_fix_on_save = 0
-let g:ale_lint_delay = 500
-let g:ale_lint_on_enter = 1
-let g:ale_lint_on_insert_leave = 1
-let g:ale_lint_on_save = 1
-let g:ale_lint_on_text_changed = 'never'
-let g:ale_list_vertical = 1
-let g:ale_set_highlights = 1
-let g:ale_warn_about_trailing_whitespace = 1
-let g:ale_virtualtext_cursor = 1
-
-let g:ale_sign_error = '×'
-
-let g:ale_linters = {
-            \ 'python': ['pyflakes'],
-            \ 'javascript': ['eslint']
-            \ }
-
-" nmap <silent> <leader>gd :ALEGoToTypeDefinitionInVSplit<cr>
-" nmap <silent> <leader>gdt :ALEGoToTypeDefinitionInTab<cr>
-" nmap <silent> <leader>gds :ALEGoToTypeDefinitionInSplit<cr>
-" nmap <silent> <leader>fr :ALEFindReferences<cr>
-nmap <silent> <leader>aj :ALENext<cr>
-nmap <silent> <leader>ak :ALEPrevious<cr>
-
-
-" }}}
-" Ctrl-P {{{
-let g:ctrlp_match_window = 'bottom,order:ttb,min:1,max:10,results:10'
-let g:ctrlp_tabpage_position = 'ac'
-
-
-" }}}
-" Winresizer {{{
-let g:winresizer_enable = 1
-let g:winresizer_finish_with_escape = 1
-let g:winresizer_vert_resize = 5
-let g:winresizer_horiz_resize = 2
-
-nnoremap <leader>w :WinResizerStartFocus<cr>
-
-if has('autocmd')
-    autocmd VimEnter unmap <C-E>
-    autocmd VimEnter unmap <C-a>
-else
-    echom "[*] ERROR: NO AUTOCMD - Could not unmap unwanted winresizer shortcuts"
-endif
-
-
-" }}}
-" NerdCommenter {{{
+" 10) NerdCommenter {{{
 let g:NERDSpaceDelims = 1
 let g:NERDCompactSexyComs = 0
 let g:NERDCommentEmptyLines = 0
@@ -1038,30 +1019,7 @@ vnoremap <silent> <leader>cd :call NERDComment('x', 'uncomment')<cr>
 nnoremap <silent> <leader>cy :call NERDComment('n', 'yank')<cr>
 vnoremap <silent> <leader>cy :call NERDComment('x', 'yank')<cr>
 " }}}
-" AutoPairs {{{
-let g:AutoPairsFlyMode = 0
-let g:AutoPairsMapCh = 0
-
-if has('autocmd')
-    autocmd VimEnter unmap <M-p>
-    autocmd VimEnter unmap <M-e>
-    autocmd VimEnter unmap <M-n>
-    autocmd VimEnter unmap <M-b>
-    autocmd VimEnter unmap <c-h>
-else
-    echom "[*] ERROR: NO AUTOCMD - Could not unmap unwanted auto-pairs shortcuts"
-endif
-
-
-" }}}
-" EasyMotion {{{
-nmap <leader><leader>s <Plug>(easymotion-overwin-f)
-nmap <leader><leader>l <Plug>(easymotion-overwin-line)
-nmap <leader><leader>w <Plug>(easymotion-overwin-w)
-
-
-" }}}
-" Startify {{{
+" 11) Startify {{{
 let g:startify_session_dir = expand('$VIMRUNTIME/sessions') 
 let g:startify_lists = [
             \ {'type': 'sessions', 'header':['     Sessions']},
@@ -1089,7 +1047,23 @@ let g:startify_custom_header = [
             \ s:startify_left_margin . '                                                                ',
             \ ]
 " }}}
+" 12) Winresizer {{{
+let g:winresizer_enable = 1
+let g:winresizer_finish_with_escape = 1
+let g:winresizer_vert_resize = 5
+let g:winresizer_horiz_resize = 2
 
+nnoremap <leader>w :WinResizerStartFocus<cr>
+
+if has('autocmd')
+    autocmd VimEnter unmap <C-E>
+    autocmd VimEnter unmap <C-a>
+else
+    echom "[*] ERROR: NO AUTOCMD - Could not unmap unwanted winresizer shortcuts"
+endif
+
+
+" }}}
 
 
 if !empty(glob('/c/Users/m4rc0/Documents'))
@@ -1097,5 +1071,6 @@ if !empty(glob('/c/Users/m4rc0/Documents'))
 elseif !empty(glob('C:/Users/m4rc0/Documents'))
     cd C:/Users/m4rc0/Documents
 endif
+
 
 " vim:foldmethod=marker:foldlevel=0
