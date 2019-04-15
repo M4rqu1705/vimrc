@@ -58,7 +58,7 @@ if has("gui_running")
     if has('autocmd')
         autocmd VimEnter * execute "simalt ~x"
     else
-        echom "[*] ERROR: NO AUTOCMD - Did not maximize window"
+        echom "[×] ERROR: NO AUTOCMD - Did not maximize window"
     endif
 endif
 
@@ -67,14 +67,13 @@ endif
 " 5) Themes {{{
 " colorscheme molokai | let g:molokai_original = 1
 
-" if has('autocmd') | autocmd VimEnter * colorscheme tender |
-" else | echom "[*] ERROR: NO AUTOCMD - Could not set the TENDER colorscheme" |
-" endif
-
-
-if has('autocmd') | autocmd VimEnter * colorscheme onehalfdark |
-else | echom "[*] ERROR: NO AUTOCMD - Could not set the ONEHALFDARK colorscheme" |
+if has('autocmd') | autocmd VimEnter * colorscheme tender |
+else | echom "[×] ERROR: NO AUTOCMD - Could not set the TENDER colorscheme" |
 endif
+
+" if has('autocmd') | autocmd VimEnter * colorscheme onehalfdark |
+" else | echom "[×] ERROR: NO AUTOCMD - Could not set the ONEHALFDARK colorscheme" |
+" endif
 
 
 " }}}
@@ -93,7 +92,7 @@ if has('spell')
     set spell spelllang=en,es
     set thesaurus+=$VIMRUNTIME/spell/en_thesaurus.txt
 else
-    echom "[*] ERROR: NO SPELL - Could not configure spell check"
+    echom "[×] ERROR: NO SPELL - Could not configure spell check"
 endif
 
 " For making everything UTF-8
@@ -121,7 +120,7 @@ if has('persistent_undo')
     set undodir=s:destination
     set undofile
 else
-    echom "[*] ERROR: NO PERSISTENT UNDO - Could not set up persistent undo"
+    echom "[×] ERROR: NO PERSISTENT UNDO - Could not set up persistent undo"
 endif
 
 
@@ -193,9 +192,10 @@ if has('folding')
     set foldmethod=manual       " Folds are based on indent level
     set foldlevelstart=10       " Number of fold levels to be opened at enter
     set foldnestmax=10
+    set modeline
     set modelines=1
 else
-    echom "[*] Error: NO FOLDING Could not configure code folding"
+    echom "[×] ERROR: NO FOLDING Could not configure code folding"
 endif
 " zO opens current fold recursively
 " zC closes current fold recursively
@@ -284,13 +284,13 @@ if has('mksession')
             autocmd VimEnter * set sessionoptions+=winsize
         augroup END
     else
-        echom "[*] ERROR: NO AUTOCMD - Did not configure vim sessions"
+        echom "[×] ERROR: NO AUTOCMD - Did not configure vim sessions"
     endif
 
     let g:sessions_dir = expand('$VIMRUNTIME/../../../Data/settings/sessions')
     execute 'cnoreabbrev mks mksession! ' . g:sessions_dir . '/'
 else
-    echom "[*] ERROR: NO SESSIONS - Could not configure vim sessions"
+    echom "[×] ERROR: NO SESSIONS - Could not configure vim sessions"
 endif
 
 
@@ -313,39 +313,50 @@ endif
 if has("terminal")
     " Use escape key instead of strange combination
     tnoremap <esc> <C-\><C-n>
-
-    " Use git-cmd instead of the system-default windows cmd
-    let g:git_cmd_dir = expand('$VIMRUNTIME/../../../Programming/Git/git-cmd.exe')
+    tnoremap jk <C-\><C-n>
 
     " Prepare command mode mappings which make the use of 'term' less lengthy 
-    cnoreabbrev term execute "vert term ++kill=term " . g:git_cmd_dir
-    cnoreabbrev hterm execute "term ++kill=term " . g:git_cmd_dir
-    cnoreabbrev tterm execute "tabnew<bar>term ++kill=term ++curwin " . g:git_cmd_dir
+    cnoreabbrev term vert term ++kill=term ++close
+    cnoreabbrev hterm term ++kill=term ++close
+    cnoreabbrev tterm execute "tabnew<bar>term ++kill=term ++curwin ++close"
+
+
+    let g:conda_environment = "CodeQuest"
+    let g:vimrc_github = "https://github.com/M4rqu1705/vimrc"
 
     " Prepare PATH variables for ... 
-    " Git
-    let s:git_full_path = expand('$VIMRUNTIME/../../../Programming/Git/bin') . ";" . expand(' $VIMRUNTIME/../../../Programming/Git/usr/bin') . ";"
-    " Python
-    let s:python_full_path = expand('$VIMRUNTIME/../../../Programming/WPy-3710/python-3.7.1') . ";"
+    let s:fd_path = expand('$VIMRUNTIME/../../../Programming/fd')
+    let s:fzf_path = expand('$VIMRUNTIME/../../../Programming/fzf')
+    let s:wget_path = expand('$VIMRUNTIME/../../../Programming/wget')
+    let s:python_path = expand('$VIMRUNTIME/../../../Programming/WPy-3710/python-3.7.1')
+    let s:git_path = expand('$VIMRUNTIME/../../../Programming/Git/bin') . ";" .
+                \ expand(' $VIMRUNTIME/../../../Programming/Git/usr/bin') 
+
+    let s:relevant_paths = []
+
+    if $PATH !~? "fd" | call add(s:relevant_paths, s:fd_path) | endif
+    if $PATH !~? "fzf" | call add(s:relevant_paths, s:fzf_path) | endif
+    if $PATH !~? "git" | call add(s:relevant_paths, s:git_path) | endif
+    if $PATH !~? "wget" | call add(s:relevant_paths, s:wget_path) | endif
+    if $PATH !~? "python" && $PATH !~? "conda" && $PATH !~? "WPy-3710"
+        call add(s:relevant_paths, s:python_path)
+    endif
+
 
     if has('autocmd')
         augroup set_path
-            " Only add git to path if it isn't already in PATH 
-            if $PATH !~? "git"
-                autocmd SourcePre * let $PATH = s:git_full_path . $PATH
-            endif
 
-            " Only add python to path if it isn't already in PATH 
-            if $PATH !~? "python" && $PATH !~? "conda" && $PATH !~? "WPy-3710"
-                autocmd SourcePre * let $PATH = s:python_full_path . $PATH
-            endif
+            autocmd SourcePre *vimrc if !exists('g:path_set') |
+                        \ let $PATH = join(s:relevant_paths, ";") . ";" . $PATH |
+                        \ let g:path_set = 1 |
+                        \ endif
         augroup END
     else
-        echom "[*] ERROR: NO AUTOCMD - Could not update PATH environment variable"
+        echom "[×] ERROR: NO AUTOCMD - Could not update PATH environment variable"
     endif
 
 else
-    echom "[*] ERROR: NO TERMINAL - Could not configure terminal settings"
+    echom "[×] ERROR: NO TERMINAL - Could not configure terminal settings"
 endif
 
 " Set the python3 home and dll directory, crucial to use python in Vim
@@ -356,7 +367,6 @@ endif
 
 
 " }}}
-
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " II. User defined mappings
@@ -457,8 +467,8 @@ command! WQa wqa
 command! WqA wqa
 command! Wqa wqa
 
-command! CdHere call CDCurrent()
-command! LcdHere call LCDCurrent()
+command! Cdhere call CDCurrent()
+command! Lcdhere call LCDCurrent()
 command! QuickSetup call QuickSetup()
 command! UploadVIMRC call UploadVIMRC()
 command! DownloadVIMRC call DownloadVIMRC()
@@ -474,19 +484,34 @@ command! DeleteUnlistedBuffers call DeleteUnlistedBuffers()
 function! QuickSetup()
 
     if confirm("Do you want to download Vim Plug?", "&Yes\n&No") == 1
-        let l:destination = fnameescape(expand('$VIMRUNTIME/autoload'))
-        execute "!wget https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim -P " . l:destination
-        execute "PlugInstall"
+
+        " Where to download Vim Plug
+        let l:vim_autoload = fnameescape(expand('$VIMRUNTIME/autoload'))
+        " From where to download Vim Plug
+        let l:vim_plug_link = "https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim"
+
+        " Download Vim Plug to desired directory
+        execute "!wget ". l:vim_plug_link . " -P " . l:vim_autoload
+
+        echom "[!] DO NOT FORGET TO RUN 'PlugInstall'\n"
+        echom "[✔] Successfully downloaded and installed Vim Plug!\n"
+
     else
-        echom "[*] Did not install Vim Plug\n"
+        echom "[×] Did not install Vim Plug\n"
+
     endif
 
     if confirm("Do you want to create templates/skeleton files?", "&Yes\n&No") == 1
-        let l:destination = fnameescape(expand("$VIMRUNTIME/templates"))
-        if !isdirectory(l:destination)
-            execute "!mkdir " . l:destination
+
+        " Where to create these skeleton files
+        let l:vim_templates = fnameescape(expand("$VIMRUNTIME/templates"))
+
+        " Create template directory if necessary 
+        if !isdirectory(l:vim_templates)
+            execute "!mkdir " . l:vim_templates
         endif
 
+        " Python template
         let l:contents = "#!/usr/bin/env python\n" .
                     \ "# -*- coding: utf-8 -*-\n\n" .
                     \ "'''\n" .
@@ -500,38 +525,46 @@ function! QuickSetup()
 
         execute "tabnew " . l:destination . "/skeleton.py | normal! ggVGc" . l:contents . "\<esc>:wq!\<cr>"
 
+        " Add more templates ....
+
+        echom "[✔] Successfully created skeleton files!\n"
+
     else
-        echom "[*] Did not create templates/skeleton files\n"
+        echom "[×] Did not create templates/skeleton files\n"
+
     endif
 
     if confirm("Do you want to download spell files?", "&Yes\n&No") == 1
+
         if has('spell')
+            " Where to download these spell files
             let l:destination = expand('$VIMRUNTIME/spell')
 
-            " English ascii dictionary and suggestion file
-            execute "!wget ftp.vim.org/vim/runtime/spell/en.ascii.spl -P " . l:destination
-            execute "!wget ftp.vim.org/vim/runtime/spell/en.ascii.sug -P " . l:destination
+            " Spell files: English (ascii, latin1, utf8) and Spanish (latin1, utf8) 
+            let g:links = [ "ftp.vim.org/vim/runtime/spell/en.ascii.spl", 
+                        \ "ftp.vim.org/vim/runtime/spell/en.ascii.sug",
+                        \ "ftp.vim.org/vim/runtime/spell/en.latin1.spl",
+                        \ "ftp.vim.org/vim/runtime/spell/en.latin1.sug",
+                        \ "ftp.vim.org/vim/runtime/spell/en.utf-8.spl",
+                        \ "ftp.vim.org/vim/runtime/spell/en.utf-8.sug",
+                        \ "ftp.vim.org/vim/runtime/spell/es.latin1.spl",
+                        \ "ftp.vim.org/vim/runtime/spell/es.latin1.sug",
+                        \ "ftp.vim.org/vim/runtime/spell/es.utf-8.spl",
+                        \ "ftp.vim.org/vim/runtime/spell/es.utf-8.sug"
+                        \ ]
 
-            " English latin1 dictionary and suggestion file
-            execute "!wget ftp.vim.org/vim/runtime/spell/en.latin1.spl -P " . l:destination
-            execute "!wget ftp.vim.org/vim/runtime/spell/en.latin1.sug -P " . l:destination
+            " Download every one of these spell files
+            execute "!wget -P " . join(g:links, " " . l:destination . " ")
 
-            " English utf-8 dictionary and suggestion file
-            execute "!wget ftp.vim.org/vim/runtime/spell/en.utf-8.spl -P " . l:destination
-            execute "!wget ftp.vim.org/vim/runtime/spell/en.utf-8.sug -P " . l:destination
+            echom "[✔] Successfully downloaded spell files!\n"
 
-            " Spanish latin1 dictionary and suggestion file
-            execute "!wget ftp.vim.org/vim/runtime/spell/es.latin1.spl -P " . l:destination
-            execute "!wget ftp.vim.org/vim/runtime/spell/es.latin1.sug -P " . l:destination
-
-            " Spanish utf-8 dictionary and suggestion file
-            execute "!wget ftp.vim.org/vim/runtime/spell/es.utf-8.spl -P " . l:destination
-            execute "!wget ftp.vim.org/vim/runtime/spell/es.utf-8.sug -P " . l:destination
         else
-            echom "[*] ERROR: NO SPELL - Did not download dictionaries"  
+            echom "[×] ERROR: NO SPELL - Did not download dictionaries"  
+
         endif
     else
-        echom "[*] Did not download spell files\n"
+        echom "[×] Did not download spell files\n"
+
     endif
 
 endfunction
@@ -540,9 +573,7 @@ endfunction
 " Upload current local vimrc to github repository
 function! UploadVIMRC()
 
-    " Prepare a vimrc_name variable with greater scope
     let l:vimrc_name = ""
-    " Prepare a current_directory variable to return to it after the function
     let l:current_directory = getcwd()
 
     " Change to VIMRC directory
@@ -557,22 +588,25 @@ function! UploadVIMRC()
         let l:vimrc_name = ".vimrc"
     endif
 
-    " Download repository in which to copy and upload current vimrc 
-    execute "!git clone https://github.com/M4rqu1705/vimrc && " .
-                \"cp " .  l:vimrc_name . " vimrc/.vimrc "
+    " Download repository to which to copy and upload current vimrc 
+    execute "!git clone " . g:vimrc_github 
+    execute "!cp " .  l:vimrc_name . " vimrc/.vimrc "
 
     " Change to local repository's directory for git commands
     cd vimrc
 
-    let l:answer = confirm("Are you sure you want to upload the latest changes?", "&Yes\n&No")
-    if l:answer == 1
+    if confirm("Are you sure you want to upload the latest changes to '" . g:vimrc_github . "'?", "&Yes\n&No") == 1
 
         " Add contents to staging area, commit them, and upload them
-        execute "!git add . && " .
-                    \ "git commit && " .
-                    \ "git push -fu origin master"
+        execute "!git add ."
+        execute "!git commit"
+        execute "!git push -fu origin master"
+
+        echom "[✔] Successfully uploaded latest changes in VIMRC to " . g:vimrc_github . "\n"
+
     else
-        echom "[*] Cancelled VIMRC upload!\n"
+        echom "[×] Cancelled VIMRC upload!\n"
+
     endif
 
     " Go back to user's vimrc directory
@@ -586,12 +620,11 @@ function! UploadVIMRC()
 
 endfunction
 
+
 " Download current VIMRC in github to VIM 
 function! DownloadVIMRC()
 
-    " Prepare a vimrc_name variable with greater scope
     let l:vimrc_name = ""
-    " Prepare a current_directory variable to return to it after the function
     let l:current_directory = getcwd()
 
     " Change to VIMRC directory
@@ -607,14 +640,16 @@ function! DownloadVIMRC()
     endif
 
     " Download repository from which to copy the vimrc
-    execute "!git clone https://github.com/M4rqu1705/vimrc"
+    execute "!git clone " . g:vimrc_github 
 
-    let l:answer = confirm("Would you like to replace your vimrc for the downloaded one?", "&Yes\n&No")
-    if l:answer == 1
+    if confirm("Would you like to replace your vimrc for the one downloaded from '" . g:vimrc_github . "'?", "&Yes\n&No") == 1
         " Copy contents of the downloaded vimrc to the current one 
         execute "!cp vimrc/.vimrc " . l:vimrc_name
+        echom "[✔] Successfully downloaded latest changes in VIMRC from " . g:vimrc_github . "\n"
+
     else
-        echom "[*] Cancelled VIMRC replacement!\n"
+        echom "[×] Cancelled VIMRC replacement!\n"
+
     endif
 
     " Delete local repository
@@ -698,7 +733,7 @@ endfunction
 if has('autocmd')
     autocmd FileType html,css inoremap <silent> >> ><esc>:call feedkeys(AutoCompleteTag('n'), 'n')<cr>
 else
-    echom "[*] ERROR: NO AUTOCMD - Could not run inoremap <silent> >> ><esc>:call feedkeys(AutoCompleteTag('n'), 'n')<cr>"
+    echom "[×] ERROR: NO AUTOCMD - Could not run inoremap <silent> >> ><esc>:call feedkeys(AutoCompleteTag('n'), 'n')<cr>"
 endif
 
 " Function used to remove unlisted buffers quickly 
@@ -729,36 +764,52 @@ endfunction
 " filetype 
 function! RunCode()
     if has("terminal")
+        " Full path to current program
         let l:full_path = shellescape(expand('%:p'))
 
+        " Python --- Python --- Python --- Python --- Python --- Python ------
         if &filetype == 'python'
 
             let l:current_buffer = bufwinnr("%")
-            let l:terminal_buffers = filter(range(1, bufnr('$')), 'buflisted(v:val) == 1 && (bufname(v:val) =~? "!python")')
 
-            if len(l:terminal_buffers) == 0
-                execute "vert term ++kill=term python " . l:full_path
-            else
-                execute "bwipeout! " . get(l:terminal_buffers, 0, 'default' )
-                execute "vert term ++kill=term python " . l:full_path
+            " Close all open terminals
+            let l:terminal_buffers = term_list()
+            if len(l:terminal_buffers) > 0
+                execute "bwipeout! " . join(l:terminal_buffers, " ") 
             endif
 
-            " execute l:current_buffer ."wincmd w"
+            " Create new terminal
+            execute "vert term ++kill=term ++close"
+            let l:output = [
+                        \ "conda activate " . g:conda_environment,
+                        \ "python " . l:full_path
+                        \ ]
+            call term_sendkeys(get(term_list(), 0), join(l:output, "\<cr>") . "\<cr>")
+            echom join(l:output, "\<cr>")
 
-        elseif &ft == 'javascript'
+            " execute l:current_buffer ."wincmd w"
+            " Python --- Python --- Python --- Python --- Python --- Python ------
+        elseif &filetype == 'arduino'
+            " Arduino --- Arduino --- Arduino --- Arduino --- Arduino ------------
+            write
+            " Minimize vim to focus on Arduino IDE
+            execute "simalt ~n"
+            " Arduino --- Arduino --- Arduino --- Arduino --- Arduino ------------
+        elseif &filetype == 'javascript'
             echo("JS")
             execute "!node " . l:full_path 
         else
-            echo("I don't know how to run the file")
+            echo("[×] I don't know how to run the file")
         endif
 
     else
-        echom "[*] ERROR: NO TERMINAL - Could not run code without integrated terminal"
+        echom "[×] ERROR: NO TERMINAL - Could not run code without integrated terminal"
     endif
 
 endfunction
 
 nnoremap <silent> <c-enter> :call RunCode()<cr>
+inoremap <silent> <c-enter> <esc>:call RunCode()<cr>
 
 
 function! SetFontSize(size)
@@ -795,7 +846,6 @@ nnoremap <silent> <m-,> :call AdjustFontSize(-1)<cr>
 
 " }}}
 
-
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " III. Plugins
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -810,8 +860,9 @@ Plug 'webdevel/tabulous'
 
 
 Plug 'w0rp/ale'
+Plug 'junegunn/fzf'
+Plug 'junegunn/fzf.vim'
 " Plug 'skywind3000/asyncrun.vim'
-Plug 'ctrlpvim/ctrlp.vim'
 
 Plug 'jiangmiao/auto-pairs'
 Plug 'scrooloose/nerdcommenter'
@@ -824,9 +875,11 @@ Plug 'easymotion/vim-easymotion'
 Plug 'jacoborus/tender.vim'
 Plug 'tomasr/molokai'
 
-
 Plug 'othree/html5.vim'
 Plug 'mattn/emmet-vim'
+
+
+" Plug 'cjrh/vim-conda'
 
 Plug 'mhinz/vim-startify'
 
@@ -874,25 +927,19 @@ if has('autocmd')
     autocmd VimEnter unmap <M-b>
     autocmd VimEnter unmap <c-h>
 else
-    echom "[*] ERROR: NO AUTOCMD - Could not unmap unwanted auto-pairs shortcuts"
+    echom "[×] ERROR: NO AUTOCMD - Could not unmap unwanted auto-pairs shortcuts"
 endif
 
 
 " }}}
-" 4) Ctrl-P {{{
-let g:ctrlp_match_window = 'bottom,order:ttb,min:1,max:10,results:10'
-let g:ctrlp_tabpage_position = 'ac'
-
-
-" }}}
-" 5) EasyMotion {{{
+" 4) EasyMotion {{{
 nmap <leader><leader>s <Plug>(easymotion-overwin-f)
 nmap <leader><leader>l <Plug>(easymotion-overwin-line)
 nmap <leader><leader>w <Plug>(easymotion-overwin-w)
 
 
 " }}}
-" 6) Emmet {{{
+" 5) Emmet {{{
 let g:user_emmet_install_global = 0
 " Only enable Emmet in normal mode functions.
 let g:user_emmet_mode='n'
@@ -905,9 +952,23 @@ if has('autocmd')
         autocmd FileType html,css EmmetInstall
     augroup END
 else
-    echom "[*] ERROR: NO AUTOCMD - Could not run 'Emmet Install'"
+    echom "[×] ERROR: NO AUTOCMD - Could not run 'Emmet Install'"
 endif
 
+
+" }}}
+" 6) FZF {{{
+nnoremap <c-p> :Files<cr>
+inoremap <c-p> :Files<cr>
+let $FZF_DEFAULT_COMMAND = 'fd -HL -c="always" '
+let $FZF_CTRL_T_COMMAND = $FZF_DEFAULT_COMMAND
+let $FZF_DEFAULT_OPTS = '--preview="head -30 {}" --border --inline-info '
+
+" Commands
+" <cr> - Current window
+" <c-v> - Vertical Split
+" <c-x> - Horizontal Split
+" <c-t> - New tab
 
 " }}}
 " 7) Lightline {{{
@@ -986,7 +1047,7 @@ if has('autocmd')
 
     augroup END
 else
-    echom "[*] ERROR: NO AUTOCMD - Could not map netrw commands"
+    echom "[×] ERROR: NO AUTOCMD - Could not map netrw commands"
 endif
 
 
@@ -1059,7 +1120,7 @@ if has('autocmd')
     autocmd VimEnter unmap <C-E>
     autocmd VimEnter unmap <C-a>
 else
-    echom "[*] ERROR: NO AUTOCMD - Could not unmap unwanted winresizer shortcuts"
+    echom "[×] ERROR: NO AUTOCMD - Could not unmap unwanted winresizer shortcuts"
 endif
 
 
