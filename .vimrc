@@ -46,34 +46,45 @@ endif
 " source $VIMRUNTIME/mswin.vim
 " behave mswin
 
+" if has('autocmd')
+    " autocmd VimResized * wincmd =
+" else
+    " echoerr "[×] ERROR: NO AUTOCMD - Could not optimize window's splits"
+" endif
+
 
 " }}}
 " 4) GUI {{{
 if has("gui_running")
     set guioptions=cRLhb            " Remove menubar and other disturbing items in gVIM
-    set guifont=Lucida_Console:h17qANTIALIASED
+    set guifont=Lucida_Console:h16qANTIALIASED
     set t_Co=256
     set cursorline                  " Highlight line with cursor
     " Maximize the screen on enter if has autocmd
     if has('autocmd')
         autocmd VimEnter * execute "simalt ~x"
     else
-        echom "[×] ERROR: NO AUTOCMD - Did not maximize window"
+        echoerr "[×] ERROR: NO AUTOCMD - Did not maximize window"
     endif
 endif
 
 
 " }}}
 " 5) Themes {{{
-" colorscheme molokai | let g:molokai_original = 1
+" colorscheme molokai
+" let g:molokai_original = 1
 
-if has('autocmd') | autocmd VimEnter * colorscheme tender |
-else | echom "[×] ERROR: NO AUTOCMD - Could not set the TENDER colorscheme" |
-endif
-
-" if has('autocmd') | autocmd VimEnter * colorscheme onehalfdark |
-" else | echom "[×] ERROR: NO AUTOCMD - Could not set the ONEHALFDARK colorscheme" |
+" if has('autocmd')
+" autocmd VimEnter * colorscheme tender
+" else
+" echoerr "[×] ERROR: NO AUTOCMD - Could not set the TENDER colorscheme"
 " endif
+
+if has('autocmd')
+    autocmd VimEnter * colorscheme onehalfdark
+else 
+    echoerr "[×] ERROR: NO AUTOCMD - Could not set the ONEHALFDARK colorscheme"
+endif
 
 
 " }}}
@@ -92,7 +103,7 @@ if has('spell')
     set spell spelllang=en,es
     set thesaurus+=$VIMRUNTIME/spell/en_thesaurus.txt
 else
-    echom "[×] ERROR: NO SPELL - Could not configure spell check"
+    echoerr "[×] ERROR: NO SPELL - Could not configure spell check"
 endif
 
 " For making everything UTF-8
@@ -120,7 +131,7 @@ if has('persistent_undo')
     set undodir=s:destination
     set undofile
 else
-    echom "[×] ERROR: NO PERSISTENT UNDO - Could not set up persistent undo"
+    echoerr "[×] ERROR: NO PERSISTENT UNDO - Could not set up persistent undo"
 endif
 
 
@@ -195,7 +206,7 @@ if has('folding')
     set modeline
     set modelines=1
 else
-    echom "[×] ERROR: NO FOLDING Could not configure code folding"
+    echoerr "[×] ERROR: NO FOLDING Could not configure code folding"
 endif
 " zO opens current fold recursively
 " zC closes current fold recursively
@@ -284,13 +295,13 @@ if has('mksession')
             autocmd VimEnter * set sessionoptions+=winsize
         augroup END
     else
-        echom "[×] ERROR: NO AUTOCMD - Did not configure vim sessions"
+        echoerr "[×] ERROR: NO AUTOCMD - Did not configure vim sessions"
     endif
 
     let g:sessions_dir = expand('$VIMRUNTIME/../../../Data/settings/sessions')
     execute 'cnoreabbrev mks mksession! ' . g:sessions_dir . '/'
 else
-    echom "[×] ERROR: NO SESSIONS - Could not configure vim sessions"
+    echoerr "[×] ERROR: NO SESSIONS - Could not configure vim sessions"
 endif
 
 
@@ -321,7 +332,7 @@ if has("terminal")
     cnoreabbrev tterm execute "tabnew<bar>term ++kill=term ++curwin ++close"
 
 
-    let g:conda_environment = "CodeQuest"
+    let g:conda_environment = "base"
     let g:vimrc_github = "https://github.com/M4rqu1705/vimrc"
 
     " Prepare PATH variables for ... 
@@ -352,11 +363,11 @@ if has("terminal")
                         \ endif
         augroup END
     else
-        echom "[×] ERROR: NO AUTOCMD - Could not update PATH environment variable"
+        echoerr "[×] ERROR: NO AUTOCMD - Could not update PATH environment variable"
     endif
 
 else
-    echom "[×] ERROR: NO TERMINAL - Could not configure terminal settings"
+    echoerr "[×] ERROR: NO TERMINAL - Could not configure terminal settings"
 endif
 
 " Set the python3 home and dll directory, crucial to use python in Vim
@@ -453,6 +464,22 @@ inoremap <c-j> <esc>ja
 " 'Inside fold' text object 
 onoremap iz :<c-u>normal! [zV]z<cr>
 
+if exists("g:restrained_mode")
+    inoremap <silent> <esc> <nop>
+    inoremap <silent> <up> <nop>
+    inoremap <silent> <down> <nop>
+    inoremap <silent> <left> <nop>
+    inoremap <silent> <right> <nop>
+    nnoremap <silent> h <nop>
+    nnoremap <silent> j <nop>
+    nnoremap <silent> k <nop>
+    nnoremap <silent> l <nop>
+    vnoremap <silent> h <nop>
+    vnoremap <silent> j <nop>
+    vnoremap <silent> k <nop>
+    vnoremap <silent> l <nop>
+endif
+
 
 " }}}
 " 2) Ex command remap {{{
@@ -467,12 +494,14 @@ command! WQa wqa
 command! WqA wqa
 command! Wqa wqa
 
+
 command! Cdhere call CDCurrent()
 command! Lcdhere call LCDCurrent()
 command! QuickSetup call QuickSetup()
 command! UploadVIMRC call UploadVIMRC()
 command! DownloadVIMRC call DownloadVIMRC()
 command! ClearAllRegisters call ClearAllRegisters()
+command! ClearMessages messages clear
 command! DeleteUnlistedBuffers call DeleteUnlistedBuffers()
 
 
@@ -497,7 +526,7 @@ function! QuickSetup()
         echom "[✔] Successfully downloaded and installed Vim Plug!\n"
 
     else
-        echom "[×] Did not install Vim Plug\n"
+        echoerr "[×] Did not install Vim Plug\n"
 
     endif
 
@@ -530,7 +559,7 @@ function! QuickSetup()
         echom "[✔] Successfully created skeleton files!\n"
 
     else
-        echom "[×] Did not create templates/skeleton files\n"
+        echoerr "[×] Did not create templates/skeleton files\n"
 
     endif
 
@@ -559,11 +588,11 @@ function! QuickSetup()
             echom "[✔] Successfully downloaded spell files!\n"
 
         else
-            echom "[×] ERROR: NO SPELL - Did not download dictionaries"  
+            echoerr "[×] ERROR: NO SPELL - Did not download dictionaries"  
 
         endif
     else
-        echom "[×] Did not download spell files\n"
+        echoerr "[×] Did not download spell files\n"
 
     endif
 
@@ -605,7 +634,7 @@ function! UploadVIMRC()
         echom "[✔] Successfully uploaded latest changes in VIMRC to " . g:vimrc_github . "\n"
 
     else
-        echom "[×] Cancelled VIMRC upload!\n"
+        echoerr "[×] Cancelled VIMRC upload!\n"
 
     endif
 
@@ -648,7 +677,7 @@ function! DownloadVIMRC()
         echom "[✔] Successfully downloaded latest changes in VIMRC from " . g:vimrc_github . "\n"
 
     else
-        echom "[×] Cancelled VIMRC replacement!\n"
+        echoerr "[×] Cancelled VIMRC replacement!\n"
 
     endif
 
@@ -733,7 +762,7 @@ endfunction
 if has('autocmd')
     autocmd FileType html,css inoremap <silent> >> ><esc>:call feedkeys(AutoCompleteTag('n'), 'n')<cr>
 else
-    echom "[×] ERROR: NO AUTOCMD - Could not run inoremap <silent> >> ><esc>:call feedkeys(AutoCompleteTag('n'), 'n')<cr>"
+    echoerr "[×] ERROR: NO AUTOCMD - Could not run inoremap <silent> >> ><esc>:call feedkeys(AutoCompleteTag('n'), 'n')<cr>"
 endif
 
 " Function used to remove unlisted buffers quickly 
@@ -770,6 +799,8 @@ function! RunCode()
         " Python --- Python --- Python --- Python --- Python --- Python ------
         if &filetype == 'python'
 
+            write
+
             let l:current_buffer = bufwinnr("%")
 
             " Close all open terminals
@@ -779,11 +810,18 @@ function! RunCode()
             endif
 
             " Create new terminal
-            execute "vert term ++kill=term ++close"
+
+            if substitute(&guifont, '\(\S*\):h\(\d\d\)\(\S*\)', '\2', '') > 12
+                execute "vert term ++kill=term ++close"
+            else
+                execute "term ++kill=term ++close"
+            endif
+
             let l:output = [
                         \ "conda activate " . g:conda_environment,
                         \ "python " . l:full_path
                         \ ]
+
             call term_sendkeys(get(term_list(), 0), join(l:output, "\<cr>") . "\<cr>")
             echom join(l:output, "\<cr>")
 
@@ -799,11 +837,11 @@ function! RunCode()
             echo("JS")
             execute "!node " . l:full_path 
         else
-            echo("[×] I don't know how to run the file")
+            echoerr "[×] I don't know how to run the file"
         endif
 
     else
-        echom "[×] ERROR: NO TERMINAL - Could not run code without integrated terminal"
+        echoerr "[×] ERROR: NO TERMINAL - Could not run code without integrated terminal"
     endif
 
 endfunction
@@ -838,6 +876,10 @@ endfunction
 function! AdjustFontSize(amount)
     let l:cursize = substitute(&guifont, '\(\S*\):h\(\d\d\)\(\S*\)', '\2', '')
     call SetFontSize(l:cursize + a:amount)
+endfunction
+
+function! GetFontSize()
+    return substitute(&guifont, '\(\S*\):h\(\d\d\)\(\S*\)', '\2', '')
 endfunction
 
 nnoremap <silent> <m-.> :call AdjustFontSize(1)<cr>
@@ -927,7 +969,7 @@ if has('autocmd')
     autocmd VimEnter unmap <M-b>
     autocmd VimEnter unmap <c-h>
 else
-    echom "[×] ERROR: NO AUTOCMD - Could not unmap unwanted auto-pairs shortcuts"
+    echoerr "[×] ERROR: NO AUTOCMD - Could not unmap unwanted auto-pairs shortcuts"
 endif
 
 
@@ -952,7 +994,7 @@ if has('autocmd')
         autocmd FileType html,css EmmetInstall
     augroup END
 else
-    echom "[×] ERROR: NO AUTOCMD - Could not run 'Emmet Install'"
+    echoerr "[×] ERROR: NO AUTOCMD - Could not run 'Emmet Install'"
 endif
 
 
@@ -963,16 +1005,32 @@ inoremap <c-p> :Files<cr>
 let $FZF_DEFAULT_COMMAND = 'fd -HL -c="always" '
 let $FZF_CTRL_T_COMMAND = $FZF_DEFAULT_COMMAND
 let $FZF_DEFAULT_OPTS = '--preview="head -30 {}" --border --inline-info '
+if has('autocmd')
+    autocmd FileType fzf tnoremap <esc> <c-q>
+else
+    echoerr "[×] ERROR: NO AUTOCMD - Could not map fzf commands"
+endif
 
 " Commands
 " <cr> - Current window
+" <c-k> - Selection up
+" <c-j> - Selection down
 " <c-v> - Vertical Split
 " <c-x> - Horizontal Split
 " <c-t> - New tab
 
 " }}}
 " 7) Lightline {{{
-let g:lightline = { 'colorscheme': 'wombat' }
+let g:lightline = {
+            \ 'colorscheme': 'wombat',
+            \ 'active': {
+            \   'left': [ [ 'mode', 'paste' ],
+            \             [ 'readonly', 'filename', 'modified', 'font_size' ] ]
+            \ },
+            \ 'component_function': {
+            \   'font_size': 'GetFontSize'
+            \ },
+            \ }
 if has('autocmd')
     autocmd BufEnter * execute "call lightline#enable()" 
 endif
@@ -1047,7 +1105,7 @@ if has('autocmd')
 
     augroup END
 else
-    echom "[×] ERROR: NO AUTOCMD - Could not map netrw commands"
+    echoerr "[×] ERROR: NO AUTOCMD - Could not map netrw commands"
 endif
 
 
@@ -1094,19 +1152,32 @@ let g:startify_change_to_dir = 1
 let g:startify_padding_left = 5
 let g:startify_custom_indices = ['cc', 'dd', 'mm', 'nn', 'pp', 'rr', 'ww', 'xx', 'yy', 'zz']
 
-let s:startify_left_margin = repeat(' ', (&columns - 63)/2)
+function! PLUGINS_ResetStartifyCustomHeader()
+    let s:startify_left_margin = repeat(' ', (&columns - 63)/2)
 
-let g:startify_custom_header = [
-            \ s:startify_left_margin . ' ___      ___ ___  _____ ______           ________    _____     ',
-            \ s:startify_left_margin . '|\  \    /  /|\  \|\   _ \  _   \        |\   __  \  / __  \    ',
-            \ s:startify_left_margin . '\ \  \  /  / \ \  \ \  \\\__\ \  \       \ \  \|\  \|\/_|\  \   ',
-            \ s:startify_left_margin . ' \ \  \/  / / \ \  \ \  \\|__| \  \       \ \   __  \|/ \ \  \  ',
-            \ s:startify_left_margin . '  \ \    / /   \ \  \ \  \    \ \  \       \ \  \|\  \ __\ \  \ ',
-            \ s:startify_left_margin . '   \  __/ /     \ \__\ \__\    \ \__\       \ \_______|\__\ \__\',
-            \ s:startify_left_margin . '    \|__|/       \|__|\|__|     \|__|        \|_______\|__|\|__|',
-            \ s:startify_left_margin . '                                                                ',
-            \ s:startify_left_margin . '                                                                ',
-            \ ]
+    let g:startify_custom_header = [
+                \ s:startify_left_margin . ' ___      ___ ___  _____ ______           ________    _____     ',
+                \ s:startify_left_margin . '|\  \    /  /|\  \|\   _ \  _   \        |\   __  \  / __  \    ',
+                \ s:startify_left_margin . '\ \  \  /  / \ \  \ \  \\\__\ \  \       \ \  \|\  \|\/_|\  \   ',
+                \ s:startify_left_margin . ' \ \  \/  / / \ \  \ \  \\|__| \  \       \ \   __  \|/ \ \  \  ',
+                \ s:startify_left_margin . '  \ \    / /   \ \  \ \  \    \ \  \       \ \  \|\  \ __\ \  \ ',
+                \ s:startify_left_margin . '   \  __/ /     \ \__\ \__\    \ \__\       \ \_______|\__\ \__\',
+                \ s:startify_left_margin . '    \|__|/       \|__|\|__|     \|__|        \|_______\|__|\|__|',
+                \ s:startify_left_margin . '                                                                ',
+                \ s:startify_left_margin . '                                                                ',
+                \ ]
+    Startify
+endfunction
+
+
+if has('autocmd')
+    autocmd VimEnter * if &filetype == "startify" | call PLUGINS_ResetStartifyCustomHeader() | endif
+    autocmd VimResized * if &filetype == "startify" | call PLUGINS_ResetStartifyCustomHeader() | endif
+else
+    echoerr "[×] ERROR: NO AUTOCMD - Cannot automatically reset Startify Custom Header"
+endif
+
+
 " }}}
 " 12) Winresizer {{{
 let g:winresizer_enable = 1
@@ -1120,7 +1191,7 @@ if has('autocmd')
     autocmd VimEnter unmap <C-E>
     autocmd VimEnter unmap <C-a>
 else
-    echom "[×] ERROR: NO AUTOCMD - Could not unmap unwanted winresizer shortcuts"
+    echoerr "[×] ERROR: NO AUTOCMD - Could not unmap unwanted winresizer shortcuts"
 endif
 
 
