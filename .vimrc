@@ -47,9 +47,12 @@ endif
 " behave mswin
 
 " if has('autocmd')
-    " autocmd VimResized * wincmd =
+" augroup Window
+" autocmd!
+" autocmd VimResized * wincmd =
+" augroup END
 " else
-    " echoerr "[×] ERROR: NO AUTOCMD - Could not optimize window's splits"
+" echoerr "[×] ERROR: NO AUTOCMD - Could not optimize window's splits"
 " endif
 
 
@@ -62,7 +65,10 @@ if has("gui_running")
     set cursorline                  " Highlight line with cursor
     " Maximize the screen on enter if has autocmd
     if has('autocmd')
-        autocmd VimEnter * execute "simalt ~x"
+        augroup GUI
+            autocmd!
+            autocmd VimEnter * execute "simalt ~x"
+        augroup END
     else
         echoerr "[×] ERROR: NO AUTOCMD - Did not maximize window"
     endif
@@ -74,17 +80,16 @@ endif
 " colorscheme molokai
 " let g:molokai_original = 1
 
-" if has('autocmd')
-" autocmd VimEnter * colorscheme tender
-" else
-" echoerr "[×] ERROR: NO AUTOCMD - Could not set the TENDER colorscheme"
-" endif
-
 if has('autocmd')
-    autocmd VimEnter * colorscheme onehalfdark
-else 
-    echoerr "[×] ERROR: NO AUTOCMD - Could not set the ONEHALFDARK colorscheme"
+    augroup Themes
+        autocmd!
+        autocmd VimEnter * colorscheme tender
+        autocmd VimEnter * colorscheme onehalfdark
+    augroup END
+else
+    echoerr "[×] ERROR: NO AUTOCMD - Could not set colorscheme"
 endif
+
 
 
 " }}}
@@ -282,7 +287,8 @@ set noswapfile
 " 15) Sessions {{{
 if has('mksession')
     if has('autocmd')
-        augroup vim_session
+        augroup Sessions
+            autocmd!
             autocmd VimEnter * set sessionoptions=blank
             autocmd VimEnter * set sessionoptions+=buffers
             autocmd VimEnter * set sessionoptions+=curdir
@@ -308,7 +314,7 @@ endif
 " }}}
 " 16) Templates {{{
 if has("autocmd")
-    augroup templates
+    augroup Templates
         autocmd!
 
         " Python files
@@ -355,8 +361,8 @@ if has("terminal")
 
 
     if has('autocmd')
-        augroup set_path
-
+        augroup Terminal
+            autocmd!
             autocmd SourcePre *vimrc if !exists('g:path_set') |
                         \ let $PATH = join(s:relevant_paths, ";") . ";" . $PATH |
                         \ let g:path_set = 1 |
@@ -760,7 +766,10 @@ function! AutoCompleteTag(mode)
 endfunction
 
 if has('autocmd')
-    autocmd FileType html,css inoremap <silent> >> ><esc>:call feedkeys(AutoCompleteTag('n'), 'n')<cr>
+    augroup CustomFunctions
+        autocmd!
+        autocmd FileType html,css inoremap <silent> >> ><esc>:call feedkeys(AutoCompleteTag('n'), 'n')<cr>
+    augroup END
 else
     echoerr "[×] ERROR: NO AUTOCMD - Could not run inoremap <silent> >> ><esc>:call feedkeys(AutoCompleteTag('n'), 'n')<cr>"
 endif
@@ -811,7 +820,7 @@ function! RunCode()
 
             " Create new terminal
 
-            if substitute(&guifont, '\(\S*\):h\(\d\d\)\(\S*\)', '\2', '') > 12
+            if GetFontSize() > 12
                 execute "vert term ++kill=term ++close"
             else
                 execute "term ++kill=term ++close"
@@ -882,8 +891,8 @@ function! GetFontSize()
     return substitute(&guifont, '\(\S*\):h\(\d\d\)\(\S*\)', '\2', '')
 endfunction
 
-nnoremap <silent> <m-.> :call AdjustFontSize(1)<cr>
-nnoremap <silent> <m-,> :call AdjustFontSize(-1)<cr>
+nnoremap <silent> <m-.> :call AdjustFontSize(1)<cr>:redraw<cr>:echo "Font size: " . GetFontSize()<cr>
+nnoremap <silent> <m-,> :call AdjustFontSize(-1)<cr>:redraw<cr>:echo "Font size: " . GetFontSize()<cr>
 
 
 " }}}
@@ -963,11 +972,14 @@ let g:AutoPairsFlyMode = 0
 let g:AutoPairsMapCh = 0
 
 if has('autocmd')
-    autocmd VimEnter unmap <M-p>
-    autocmd VimEnter unmap <M-e>
-    autocmd VimEnter unmap <M-n>
-    autocmd VimEnter unmap <M-b>
-    autocmd VimEnter unmap <c-h>
+    augroup ALE
+        autocmd!
+        autocmd VimEnter unmap <M-p>
+        autocmd VimEnter unmap <M-e>
+        autocmd VimEnter unmap <M-n>
+        autocmd VimEnter unmap <M-b>
+        autocmd VimEnter unmap <c-h>
+    augroup END
 else
     echoerr "[×] ERROR: NO AUTOCMD - Could not unmap unwanted auto-pairs shortcuts"
 endif
@@ -989,7 +1001,8 @@ let g:user_emmet_mode='n'
 let g:user_emmet_leader_key= mapleader.'e'
 
 if has('autocmd')
-    augroup vim_emmet
+    augroup EMMET
+        autocmd!
         " Create Emmet mappings to current buffer
         autocmd FileType html,css EmmetInstall
     augroup END
@@ -1004,12 +1017,32 @@ nnoremap <c-p> :Files<cr>
 inoremap <c-p> :Files<cr>
 let $FZF_DEFAULT_COMMAND = 'fd -HL -c="always" '
 let $FZF_CTRL_T_COMMAND = $FZF_DEFAULT_COMMAND
-let $FZF_DEFAULT_OPTS = '--preview="head -30 {}" --border --inline-info '
+let $FZF_DEFAULT_OPTS = '--preview="head -10 {}" --inline-info '
 if has('autocmd')
-    autocmd FileType fzf tnoremap <esc> <c-q>
+    augroup FZF
+        autocmd!
+        autocmd FileType fzf tnoremap <esc> <c-q>
+    augroup END
 else
     echoerr "[×] ERROR: NO AUTOCMD - Could not map fzf commands"
 endif
+
+let g:fzf_colors =
+            \ { 'fg':      ['fg', 'Normal'],
+            \ 'bg':      ['bg', 'Normal'],
+            \ 'hl':      ['fg', 'Comment'],
+            \ 'fg+':     ['fg', 'CursorLine', 'CursorColumn', 'Normal'],
+            \ 'bg+':     ['bg', 'CursorLine', 'CursorColumn'],
+            \ 'hl+':     ['fg', 'Statement'],
+            \ 'info':    ['fg', 'PreProc'],
+            \ 'border':  ['fg', 'Ignore'],
+            \ 'prompt':  ['fg', 'Conditional'],
+            \ 'pointer': ['fg', 'Exception'],
+            \ 'marker':  ['fg', 'Keyword'],
+            \ 'spinner': ['fg', 'Label'],
+            \ 'header':  ['fg', 'Comment'] }
+
+let g:fzf_layout = { 'down': '~10' }
 
 " Commands
 " <cr> - Current window
@@ -1022,17 +1055,14 @@ endif
 " }}}
 " 7) Lightline {{{
 let g:lightline = {
-            \ 'colorscheme': 'wombat',
-            \ 'active': {
-            \   'left': [ [ 'mode', 'paste' ],
-            \             [ 'readonly', 'filename', 'modified', 'font_size' ] ]
-            \ },
-            \ 'component_function': {
-            \   'font_size': 'GetFontSize'
-            \ },
+            \ 'colorscheme': 'wombat'
             \ }
 if has('autocmd')
-    autocmd BufEnter * execute "call lightline#enable()" 
+
+    augroup Lightline
+        autocmd!
+        autocmd BufEnter * execute "call lightline#enable()" 
+    augroup END
 endif
 
 " Status line tutorial from https://shapeshed.com/vim-statuslines/
@@ -1102,7 +1132,6 @@ if has('autocmd')
         " Refresh directory listing with f5
         autocmd filetype netrw nmap <buffer> <f5> <c-l>
 
-
     augroup END
 else
     echoerr "[×] ERROR: NO AUTOCMD - Could not map netrw commands"
@@ -1171,8 +1200,11 @@ endfunction
 
 
 if has('autocmd')
-    autocmd VimEnter * if &filetype == "startify" | call PLUGINS_ResetStartifyCustomHeader() | endif
-    autocmd VimResized * if &filetype == "startify" | call PLUGINS_ResetStartifyCustomHeader() | endif
+    augroup Startify
+        autocmd!
+        autocmd VimEnter * if &filetype == "startify" | call PLUGINS_ResetStartifyCustomHeader() | endif
+        autocmd VimResized * if &filetype == "startify" | call PLUGINS_ResetStartifyCustomHeader() | endif
+    augroup END
 else
     echoerr "[×] ERROR: NO AUTOCMD - Cannot automatically reset Startify Custom Header"
 endif
@@ -1188,8 +1220,11 @@ let g:winresizer_horiz_resize = 2
 nnoremap <leader>w :WinResizerStartFocus<cr>
 
 if has('autocmd')
-    autocmd VimEnter unmap <C-E>
-    autocmd VimEnter unmap <C-a>
+    augroup Winresizer
+        autocmd!
+        autocmd VimEnter unmap <C-E>
+        autocmd VimEnter unmap <C-a>
+    augroup END
 else
     echoerr "[×] ERROR: NO AUTOCMD - Could not unmap unwanted winresizer shortcuts"
 endif
