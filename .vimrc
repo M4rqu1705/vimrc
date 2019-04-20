@@ -326,6 +326,16 @@ endif
 
 " }}}
 " 17) Terminal {{{
+function! DevelopmentEnvironment()
+    if has("terminal")
+        tabnew
+        Startify
+        execute "term ++kill=term ++close ++rows=" . winheight('%') / 4
+        wincmd k
+        execute "Vexplore " . &columns / 5
+        endif
+endfunction
+
 
 if has("terminal")
     " Use escape key instead of strange combination
@@ -819,7 +829,6 @@ function! RunCode()
             endif
 
             " Create new terminal
-
             if GetFontSize() > 12
                 execute "vert term ++kill=term ++close"
             else
@@ -894,6 +903,21 @@ endfunction
 nnoremap <silent> <m-.> :call AdjustFontSize(1)<cr>:redraw<cr>:echo "Font size: " . GetFontSize()<cr>
 nnoremap <silent> <m-,> :call AdjustFontSize(-1)<cr>:redraw<cr>:echo "Font size: " . GetFontSize()<cr>
 
+function! CreateList()
+    let l:separators = ['.', ')', '-']
+    let l:regex = '^\(\s*\)\(\d\{1,\}\)\([' . join(l:separators, '') . ']\).*$'
+
+    let l:previous_line = getline(line('.')-1)
+    if l:previous_line =~? l:regex
+        let l:whitespace = substitute(l:previous_line, l:regex, '\1', '')
+        let l:number = substitute(l:previous_line, l:regex, '\2', '')
+        let l:separator = substitute(l:previous_line, l:regex, '\3', '')
+        execute "normal! cc" . (l:number + 1) . l:separator . " "
+    endif
+endfunc
+
+
+
 
 " }}}
 
@@ -914,8 +938,8 @@ Plug 'w0rp/ale'
 Plug 'junegunn/fzf'
 Plug 'junegunn/fzf.vim'
 " Plug 'skywind3000/asyncrun.vim'
-
-Plug 'jiangmiao/auto-pairs'
+"
+Plug 'vim-scripts/auto-pairs-gentle'
 Plug 'scrooloose/nerdcommenter'
 Plug 'simeji/winresizer'
 Plug 'tpope/vim-surround'
@@ -928,9 +952,6 @@ Plug 'tomasr/molokai'
 
 Plug 'othree/html5.vim'
 Plug 'mattn/emmet-vim'
-
-
-" Plug 'cjrh/vim-conda'
 
 Plug 'mhinz/vim-startify'
 
@@ -969,6 +990,7 @@ nmap <silent> <leader>ak :ALEPrevious<cr>
 " }}}
 " 3) AutoPairs {{{
 let g:AutoPairsFlyMode = 0
+let g:AutoPairsUseInsertedCount = 1
 let g:AutoPairsMapCh = 0
 
 if has('autocmd')
