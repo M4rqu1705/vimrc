@@ -3,20 +3,33 @@ set nocompatible                " vi compatible is LAME
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " I. Configuration
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-" 1) Quick variable initialization {{{ 
+" 1) Quick variable initialization {{{
+
+" Store the VIMRUNTIME directory in a variable for later use
 let s:vim_runtime_directory = expand('$VIMRUNTIME')
+" Store the directory separator in a variable for later use
 let s:directory_separator = (match(s:vim_runtime_directory, "\/") > 0) ? '/' : '\'
 
+" Generate path from $VIMRUNTIME depending on its directory and separators
 function! FromRuntime(...)
+    " Begin preparing output_directory local variable
     let l:output_directory = s:vim_runtime_directory
 
+    " Iterate through each element in function parameter list 
     for level in a:000
+        " Append separator to output_directory ... 
         let l:output_directory .= s:directory_separator
-        let l:output_directory .= trim(level)
+        if exists("*trim")
+            " And append trimmed directory level
+            let l:output_directory .= trim(level)
+        endif
     endfor
 
-	return fnameescape(l:output_directory)
+    return fnameescape(l:output_directory)
 endfunction
+
+" Store the VIMRC path to a variable
+let g:vimrc_path = FromRuntime("..", "..", "..", "Data", "settings", "_vimrc")
 
 
 " }}}
@@ -35,26 +48,27 @@ set splitright
 " }}}
 " 4) Interface {{{
 set number                      " Add line numbers
-set numberwidth=5               " Set line number width
+set relativenumber              " Add relative line numbers
+set numberwidth=4               " Set line number width
 set noshowmode                  " Do not show the current mode
 set showcmd                     " Show currently-typed command
 set title                       " Show tab titles
-syntax on                       " Turn syntax highlighting on by default
 set visualbell                  " Use visual bell instead of beeping when doing something wrong
 set laststatus=2                " Make the last line where the status is two lines deep so you can see status always
-set background=dark             " use colours that work well on a dark background (Console is usually black)
-set clipboard=unnamed           " Set clipboard to unnamed to access the system clipboard under windows
-set sidescrolloff=2             " Add space beside the cursor when going off screen 
+set background=dark             " Use colours that work well on a dark background (Console is usually black)
+set clipboard=unnamed           " Set clipboard to unnamed to access the system clipboard under Windows
 set scrolloff=2                 " Add space around the cursor when going off screen
+set sidescrolloff=2             " Add space beside the cursor when going off screen
 set binary                      " Used to edit binary files
-set ruler                       " show the cursor position all the time
+set ruler                       " Show the cursor position all the time
 set confirm                     " Confirm commands instead of throwing errors
 set cmdheight=2                 " Make the ex command line 2 lines high
-" set foldcolumn=1                " Add a little margin to the left
 set t_Co=256                    " Make sure Vim is using 256 colors
 set ttyfast                     " Smoother screen redraw
-set lazyredraw                  " The screen will not be redrawn so frequently 
+set lazyredraw                  " The screen will not be redrawn so frequently
 set wildmenu                    " Show recommendations in the ex command line
+syntax on                       " Turn syntax highlighting on by default
+" set foldcolumn=1                " Add a little margin to the left
 
 " Enable the use of mice if they are available
 if has('mouse')
@@ -83,15 +97,21 @@ let &fileencodings = &encoding
 " }}}
 " 5) GUI {{{
 if has("gui_running")
-    set guioptions=cRLhb            " Remove menubar and other disturbing items in gVIM
-    set guifont=Lucida_Console:h12qANTIALIASED
+    set guioptions=chkM            " Remove menubar and other disturbing items in gVIM
+    set guifont=DejaVu\ Sans\ Mono:h12qDEFAULT
     set t_Co=256
     set cursorline                  " Highlight line with cursor
+    set cursorcolumn                " Highlight column with cursor
     " Maximize the screen on enter if has autocmd
     if has('autocmd')
         augroup GUI
             autocmd!
-            autocmd VimEnter * execute "simalt ~x"
+            " Download dlls from https://github.com/mattn/vimtweak
+            autocmd VimEnter * 
+                        \ if !empty("vimtweak32.dll") |
+                        \ silent! call libcallnr("vimtweak32.dll", "EnableCaption", 0) |
+                        \ silent! call libcallnr("vimtweak32.dll", "EnableMaximize", 1) |
+                        \ endif
         augroup END
     else
         echoerr "[×] ERROR: NO AUTOCMD - Did not maximize window"
@@ -107,20 +127,21 @@ if has('autocmd')
         autocmd!
         " autocmd VimEnter * colorscheme tender
         " autocmd VimEnter * colorscheme onehalfdark
-        autocmd VimEnter * colorscheme monokai
+        autocmd VimEnter * silent! colorscheme monokai
     augroup END
 else
     echoerr "[×] ERROR: NO AUTOCMD - Could not set colorscheme"
 endif
 
 
-
 " }}}
 " 7) Searching {{{
 set incsearch           " Show temporary search results as being typed
+set ignorecase
 set smartcase           " Ignore case when pattern contains lower-case letters
-set showmatch           " Automatically show matching brackets.  
+set showmatch           " Automatically show matching brackets.
 set magic               " Easier use of regex for searching
+" set gdefault            " Always use g flag on substitutions
 
 
 " }}}
@@ -167,21 +188,21 @@ endif
 set autoindent                          " Set auto-indenting on for programming
 set wrap
 set wrapmargin=2
-set textwidth=80 
+set textwidth=80
 set linebreak
 set showbreak=\.\.\.\ 
-set nolist 
+set nolist
 set formatoptions=tcnBjq2     " Describes automatic formatting
 " t - Auto-wrap text using textwidth
 " c - Auto-wrap comments and insert comment leader in new line
 " n - Recognize numbered lists: format listpat
-" B - When joining lines do not add space between multi-byte characters 
+" B - When joining lines do not add space between multi-byte characters
 " j - When joining lines remove comment leaders
 " q - Format comments with gq
 " a - Automatic formatting of paragraphs
-" 2 - Indent second line of a paragraph for the rest of the paragraph 
+" 2 - Indent second line of a paragraph for the rest of the paragraph
 
-set tabstop=4 
+set tabstop=4
 set softtabstop=4                       " Show existing tab with 4 spaces width
 set shiftwidth=4                        " When indenting with '>', use 4 spaces width
 set expandtab                           " On pressing tab, insert 4 spaces
@@ -227,7 +248,7 @@ inoremap <expr> <s-tab> pumvisible() ? "\<c-o>" : "\<c-x>\<c-o>"
 " 13) Code folding {{{
 if has('folding')
     set foldenable              " Enable code folding and show all folds
-    set foldmethod=manual   
+    set foldmethod=manual
     set foldlevelstart=10       " Number of fold levels to be opened at enter
     set foldnestmax=10
     set modeline
@@ -311,7 +332,7 @@ set noswapfile
 " 16) Sessions {{{
 if has('mksession')
     if has('autocmd')
-        let s:session_options = [ 
+        let s:session_options = [
                     \ "blank",
                     \ "buffers",
                     \ "curdir",
@@ -336,7 +357,7 @@ if has('mksession')
     endif
 
     let s:sessions_directory = FromRuntime("temp", "sessions", "")
-    execute 'cnoreabbrev mks mksession! ' . s:sessions_directory 
+    execute 'cnoreabbrev mks mksession! ' . s:sessions_directory
 else
     echoerr "[×] ERROR: NO SESSIONS - Could not configure vim sessions"
 endif
@@ -377,10 +398,10 @@ function! DevelopmentEnvironment()
         let l:current_window = bufwinnr('%')
 
         execute "term ++kill=term ++close ++rows=" . str2nr(&lines) / 4
-        execute l:current_window . "wincmd w" 
+        execute l:current_window . "wincmd w"
 
         execute "Vexplore " . &columns / 6
-        execute l:current_window + 1 . "wincmd w" 
+        execute l:current_window + 1 . "wincmd w"
 
 
         normal gg
@@ -393,7 +414,7 @@ if has("terminal")
     tnoremap <esc> <C-\><C-n>
     tnoremap jk <C-\><C-n>
 
-    " Prepare command mode mappings which make the use of 'term' less lengthy 
+    " Prepare command mode mappings which make the use of 'term' less lengthy
     cnoreabbrev term terminal ++kill=term ++curwin ++close
     cnoreabbrev vterm vert terminal ++kill=term ++close
     cnoreabbrev hterm terminal ++kill=term ++close
@@ -407,7 +428,7 @@ if has("terminal")
     let g:conda_environment = "base"
     let g:vimrc_github = "https://github.com/M4rqu1705/vimrc"
 
-    " Prepare PATH variables for ... 
+    " Prepare PATH variables for ...
     let s:fd_directory = FromRuntime("programming", "fd")
     let s:fzf_directory = FromRuntime("programming", "fzf")
     let s:ripgrep_directory = FromRuntime("programming", "ripgrep")
@@ -417,7 +438,7 @@ if has("terminal")
     let s:git_directories = [
                 \ FromRuntime("programming", "Git", "bin"),
                 \ FromRuntime("programming", "Git", "usr", "bin")
-    ]
+                \ ]
 
     " Only retain variables if the directories exist
     if !isdirectory(s:fd_directory) | unlet s:fd_directory | endif
@@ -503,8 +524,10 @@ if has('autocmd')
     augroup Programming
         autocmd!
 
-        autocmd BufWinEnter *.py try | execute "%s/\r//g" | endtry
+        autocmd BufWinEnter *.py try | execute "normal! gg=G" | execute "%s/\r//g" | catch | echo "" | endtry
         autocmd Filetype *.py let g:jedi#auto_initialization=1
+
+        autocmd BufWinEnter *.html try | execute "normal! gg=G" | execute "%s/\r//g" | catch | echo "" | endtry
 
     augroup END
 endif
@@ -524,7 +547,7 @@ function! CodeQuestSetup()
     endif
 
 endfunction
- 
+
 " }}}
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -542,26 +565,14 @@ nnoremap k gk
 nnoremap j gj
 
 
-if exists('g:vimrc_directory')
+if exists('g:vimrc_path')
     " Remap ev to edit vimrc file
-    execute "nnoremap <silent> <leader>ev :tabedit " . g:vimrc_directory . "/.vimrc<cr>"
+    execute "nnoremap <silent> <leader>ev :tabedit " . g:vimrc_path . "<cr>"
 
     " Remap lv to "refresh" vimrc
-    execute "nnoremap <silent> <leader>lv :source " . g:vimrc_directory . "/.vimrc<cr>"
-elseif has('gui_running')
-    let s:vimrc_directory = FromRuntime("..", "..", "..", "Data", "settings", "_vimrc") 
-
-    " Remap ev to edit vimrc file
-    execute "nnoremap <silent> <leader>ev :tabedit " . s:vimrc_directory . "<cr>"
-
-    " Remap lv to "refresh" vimrc
-    execute "nnoremap <silent> <leader>lv :source " . s:vimrc_directory . "<cr>"
+    execute "nnoremap <silent> <leader>lv :source " . g:vimrc_path . "<cr>"
 else
-    " Remap ev to edit vimrc file
-    nnoremap <silent> <leader>ev :tabedit $HOME/.vimrc<cr>
-
-    " Remap lv to "refresh" vimrc
-    nnoremap <silent> <leader>lv :source $HOME/.vimrc<cr>
+    echoerr "[×] ERROR: You need to create `g:vimrc_path` and restart VIM"
 endif
 
 " Searches centralize result on screen
@@ -588,7 +599,7 @@ inoremap <C-Del> <esc>dwi
 inoremap <c-a> <esc>ggVG
 nnoremap <c-a> ggVG
 
-" Control-s updates file contents 
+" Control-s updates file contents
 nnoremap <silent> <c-s> :update<cr>
 inoremap <silent> <c-s> <esc>:update<cr>a
 
@@ -596,12 +607,12 @@ inoremap <silent> <c-s> <esc>:update<cr>a
 nnoremap Y y$
 
 " Map gV to select previous visual selection
-nnoremap gV `[v`] 
+nnoremap gV `[v`]
 
 " Escape when writing jk in insert mode
 inoremap <silent> jk <esc>
 
-" 'Inside fold' text object 
+" 'Inside fold' text object
 onoremap iz :<c-u>normal! [zV]z<cr>
 
 if exists("g:restrained_mode")
@@ -636,6 +647,7 @@ command! Wqa wqa
 
 
 command! Cdhere call CDCurrent()
+command! TrimAll call TrimAll()
 command! Lcdhere call LCDCurrent()
 command! QuickSetup call QuickSetup()
 command! UploadVIMRC call UploadVIMRC()
@@ -648,8 +660,8 @@ command! DeleteUnlistedBuffers call DeleteUnlistedBuffers()
 " }}}
 " 3) Custom functions {{{
 
-" Install required dictionary files and vim plug automatically to the 
-" corresponding destinations 
+" Install required dictionary files and vim plug automatically to the
+" corresponding destinations
 function! QuickSetup()
 
     " First make sure requirements are met
@@ -713,7 +725,7 @@ function! QuickSetup()
                     \ "# Your code goes here"
                     \ "\n" .
                     \ "\n" .
-                    \ "if __name__ == '__main__':\n" . 
+                    \ "if __name__ == '__main__':\n" .
                     \ "\tmain()"
 
         execute "tabnew " . FromRuntime("templates", "skeleton.py") . " | normal! ggVGc" . l:contents . "\<esc>:wq!\<cr>"
@@ -734,8 +746,8 @@ function! QuickSetup()
         if has('spell')
             " Where to download these spell files
 
-            " Spell files: English (ascii, latin1, utf8) and Spanish (latin1, utf8) 
-            let g:links = [ "ftp.vim.org/vim/runtime/spell/en.ascii.spl", 
+            " Spell files: English (ascii, latin1, utf8) and Spanish (latin1, utf8)
+            let g:links = [ "ftp.vim.org/vim/runtime/spell/en.ascii.spl",
                         \ "ftp.vim.org/vim/runtime/spell/en.ascii.sug",
                         \ "ftp.vim.org/vim/runtime/spell/en.latin1.spl",
                         \ "ftp.vim.org/vim/runtime/spell/en.latin1.sug",
@@ -755,7 +767,7 @@ function! QuickSetup()
             echohl Normal
 
         else
-            echoerr "[×] ERROR: NO SPELL - Did not download dictionaries"  
+            echoerr "[×] ERROR: NO SPELL - Did not download dictionaries"
 
         endif
     else
@@ -806,7 +818,7 @@ function! QuickSetup()
                     \ . "extracted files inside `$VIMRUNTIME/programming`\n"
         return ""
     endif
-        
+
 
 endfunction
 
@@ -821,26 +833,15 @@ function! UploadVIMRC()
     endif
 
 
-    let l:vimrc_name = ""
     let l:current_directory = getcwd()
 
     " Change to VIMRC directory
-    if exists('g:vimrc_directory')
-        cd g:vimrc_directory
-        let l:vimrc_name = ".vimrc"
-    elseif has('gui_running')
-        let s:vimrc_directory = FromRuntime("..", "..", "..", "Data", "settings") 
-        execute "cd " . s:vimrc_directory
-        let l:vimrc_name = "_vimrc"
-    else
-        cd $HOME/
-        let l:vimrc_name = ".vimrc"
-    endif
+    execute "cd " . fnamemodify(g:vimrc_path, ":h")
 
-    " Download repository to which to copy and upload current vimrc 
-    execute "!git clone " . g:vimrc_github 
+    " Download repository to which to copy and upload current vimrc
+    execute "!git clone " . g:vimrc_github
     " Copy current vimrc to downloaded repository
-    execute "!cp " .  l:vimrc_name . " vimrc/.vimrc "
+    execute "!cp " . fnamemodify(g:vimrc_path,':t') . " vimrc/.vimrc "
 
     " Change to local repository's directory for git commands
     cd vimrc
@@ -873,31 +874,20 @@ function! UploadVIMRC()
 endfunction
 
 
-" Download current VIMRC in github to VIM 
+" Download current VIMRC in github to VIM
 function! DownloadVIMRC()
 
-    let l:vimrc_name = ""
     let l:current_directory = getcwd()
 
     " Change to VIMRC directory
-    if exists('g:vimrc_directory')
-        cd g:vimrc_directory
-        let l:vimrc_name = ".vimrc"
-    elseif has('gui_running')
-        let s:vimrc_directory = FromRuntime("..", "..", "..", "Data", "settings") 
-        execute "cd " . s:vimrc_directory
-        let l:vimrc_name = "_vimrc"
-    else
-        cd $HOME/
-        let l:vimrc_name = ".vimrc"
-    endif
+    cd fnamemodify(g:vimrc_path, ":h")
 
     " Download repository from which to copy the vimrc
-    execute "!git clone " . g:vimrc_github 
+    execute "!git clone " . g:vimrc_github
 
     if confirm("Would you like to replace your vimrc for the one downloaded from '" . g:vimrc_github . "'?", "&Yes\n&No") == 1
-        " Copy contents of the downloaded vimrc to the current one 
-        execute "!cp vimrc/.vimrc " . l:vimrc_name
+        " Copy contents of the downloaded vimrc to the current one
+        execute "!cp vimrc/.vimrc " . fnamemodify(g:vimrc_path,':t')
         echohl DiffAdd
         echom "[✔] Successfully downloaded latest changes in VIMRC from " . g:vimrc_github . "\n"
         echohl Normal
@@ -922,7 +912,7 @@ function! Eatchar(pat)
 endfunction
 
 " Define the behavior of specific tags
-let s:tags_content = { 
+let s:tags_content = {
             \   "meta":   " name\=\"\"\ content\=\"\"/>",
             \   "div":    ">\<cr>\<tab>\<cr>",
             \   "html":   " lang\=\"en-US\">\<cr>\<tab>\<cr>",
@@ -988,13 +978,13 @@ endfunction
 if has('autocmd')
     augroup CustomFunctions
         autocmd!
-        autocmd FileType html,css,php inoremap <silent> >> ><esc>:call feedkeys(AutoCompleteTag('n'), 'n')<cr>
+        autocmd FileType html,css,javascript,php inoremap <silent> >> ><esc>:call feedkeys(AutoCompleteTag('n'), 'n')<cr>
     augroup END
 else
     echoerr "[×] ERROR: NO AUTOCMD - Could not run inoremap <silent> >> ><esc>:call feedkeys(AutoCompleteTag('n'), 'n')<cr>"
 endif
 
-" Function used to remove unlisted buffers quickly 
+" Function used to remove unlisted buffers quickly
 function! DeleteUnlistedBuffers()
     execute "bwipeout! " . join(filter(range(1, bufnr('$')), 'buflisted(v:val) == 0'), " ")
 endfunction
@@ -1009,6 +999,11 @@ function! LCDCurrent()
     execute "lcd %:p:h"
 endfunction
 
+" Function used to trim all trailing whitespaces in current file
+function! TrimAll()
+    execute '%s/\s\+$//'
+endfunction
+
 " Function used to clear all registers quickly
 function! ClearAllRegisters()
     let regs=split('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789/-"*', '\zs')
@@ -1018,8 +1013,8 @@ function! ClearAllRegisters()
     execute "registers"
 endfunction
 
-" Function used to run the code in several ways as long as it is a supported 
-" filetype 
+" Function used to run the code in several ways as long as it is a supported
+" filetype
 function! RunCode()
     if has("terminal")
         " Full path to current program
@@ -1041,10 +1036,10 @@ function! RunCode()
 
 
             " Check if terminal in window already
-            if len(term_list()) > 0                     " If there exists terminals 
+            if len(term_list()) > 0                     " If there exists terminals
                 for termNum in term_list()              " Cycle through them
                     if index(tabpagebuflist(), termNum) >= 0    " If term number inside tabpage buffer list
-                        execute bufwinnr(termNum) . "wincmd w"  
+                        execute bufwinnr(termNum) . "wincmd w"
                         let l:terminal_buffer = termNum
                         break
                     else
@@ -1081,9 +1076,9 @@ function! RunCode()
             " Arduino --- Arduino --- Arduino --- Arduino --- Arduino ------------
             write
 
-            let l:runCodeScript = fnameescape(expand('$VIMRUNTIME/macros/runCode/compileAndDownloadToArduino.py')) 
+            let l:runCodeScript = fnameescape(expand('$VIMRUNTIME/macros/runCode/compileAndDownloadToArduino.py'))
             execute "py3file " . l:runCodeScript
-            
+
 
             " Arduino --- Arduino --- Arduino --- Arduino --- Arduino ------------
 
@@ -1091,14 +1086,14 @@ function! RunCode()
             " HTML --- CSS --- PHP --- HTML --- CSS --- PHP --- HTML --- CSS ---
             write
 
-            let l:runCodeScript = fnameescape(expand('$VIMRUNTIME/macros/runCode/changeAndRefreshScreen.py')) 
+            let l:runCodeScript = fnameescape(expand('$VIMRUNTIME/macros/runCode/changeAndRefreshScreen.py'))
             execute "py3file " . l:runCodeScript
 
             " HTML --- CSS --- PHP --- HTML --- CSS --- PHP --- HTML --- CSS ---
 
         elseif &filetype == 'javascript'
             echo("JS")
-            execute "!node " . l:full_path 
+            execute "!node " . l:full_path
 
         elseif &filetype == 'cpp' || &filetype == 'c'
             " Save file
@@ -1114,10 +1109,10 @@ function! RunCode()
 
 
             " Check if terminal in window already
-            if len(term_list()) > 0                     " If there exists terminals 
+            if len(term_list()) > 0                     " If there exists terminals
                 for termNum in term_list()              " Cycle through them
                     if index(tabpagebuflist(), termNum) >= 0    " If term number inside tabpage buffer list
-                        execute bufwinnr(termNum) . "wincmd w"  
+                        execute bufwinnr(termNum) . "wincmd w"
                         let l:terminal_buffer = termNum
                         break
                     else
@@ -1167,8 +1162,8 @@ function! SetFontSize(size)
 
         let l:minfontsize = 10
         let l:maxfontsize = 40
-        let l:fontname = substitute(&guifont,  '\(\S*\):h\(\d\d\)\(\S*\)', '\1', '')
-        let l:information = substitute(&guifont, '\(\S*\):h\(\d\d\)\(\S*\)', '\3', '')
+        let l:fontname = substitute(&guifont, '\v(.+):h(\d+)(.+)', '\1', '')
+        let l:information = substitute(&guifont, '\v(.+):h(\d+)(.+)', '\3', '')
 
         let l:newsize = a:size
         if(l:newsize < l:minfontsize)
@@ -1186,7 +1181,7 @@ function! SetFontSize(size)
 endfunction
 
 function! GetFontSize()
-    return substitute(&guifont, '\(\S*\):h\(\d\d\)\(\S*\)', '\2', '')
+    return substitute(&guifont, '\v(.+):h(\d+)(.+)', '\2', '')
 endfunction
 
 nnoremap <silent> <m-.> :call SetFontSize(GetFontSize() + 1)<cr>:redraw<cr>:echo "Font size: " . GetFontSize()<cr>
@@ -1214,32 +1209,39 @@ endfunc
 " 1) Setup {{{
 
 call plug#begin('$VIMRUNTIME/plugged')
+" Interface
 Plug 'itchyny/lightline.vim'
 Plug 'webdevel/tabulous'
 
+" General programming tools
 " Plug 'w0rp/ale'
 Plug 'junegunn/fzf'
 Plug 'junegunn/fzf.vim'
 " Plug 'skywind3000/asyncrun.vim'
-"
 Plug 'vim-scripts/auto-pairs-gentle'
 Plug 'scrooloose/nerdcommenter'
-Plug 'simeji/winresizer'
 Plug 'tpope/vim-surround'
 Plug 'tpope/vim-repeat'
 Plug 'easymotion/vim-easymotion'
 
+" Themes
 " Plug 'sonph/onehalf'
 Plug 'jacoborus/tender.vim'
 Plug 'crusoexia/vim-monokai'
 
+" Speciic programming tools
+" HTML
 Plug 'othree/html5.vim'
 Plug 'mattn/emmet-vim'
 
-Plug 'davidhalter/jedi-vim'
-" Plug 'python-mode/python-mode'
+" CSS
+Plug 'ap/vim-css-color'
 
-Plug 'mhinz/vim-startify'
+" PHP
+Plug 'StanAngeloff/php.vim'
+
+" Python
+Plug 'davidhalter/jedi-vim'
 
 call plug#end()
 
@@ -1309,9 +1311,13 @@ nmap <leader><leader>w <Plug>(easymotion-overwin-w)
 " 5) Emmet {{{
 let g:user_emmet_install_global = 0
 " Only enable Emmet in normal mode functions.
-let g:user_emmet_mode='n'
+let g:user_emmet_mode='a'
 " Set Emmet leader key
-let g:user_emmet_leader_key= mapleader.'e'
+let g:user_emmet_leader_key= mapleader . 'e'
+" Use Emmet as autocompletion engine in HTMl and CSS files
+if &filetype == 'html' || &filetype == 'css'
+    let g:user_emmet_complete_tag = 1
+endif
 
 if has('autocmd')
     augroup EMMET
@@ -1322,6 +1328,12 @@ if has('autocmd')
 else
     echoerr "[×] ERROR: NO AUTOCMD - Could not run 'Emmet Install'"
 endif
+" Change some Emmet settings
+let g:user_emmet_settings = {
+            \ 'html' : {
+                \ 'quote_char': "'",
+            \ },
+        \ }
 
 
 " }}}
@@ -1383,7 +1395,7 @@ if has('autocmd')
 
     augroup Lightline
         autocmd!
-        autocmd BufEnter * execute "call lightline#enable()" 
+        autocmd BufEnter * execute "call lightline#enable()"
     augroup END
 endif
 
@@ -1392,7 +1404,7 @@ endif
 " #SpellRare# (Purple), #Visual# (white)
 " set statusline=
 " set statusline+=%#MoreMsg#
-" set statusline+=\ %t\ 
+" set statusline+=\ %t\
 " set statusline+=%#MoreMsg#
 " set statusline+=%m
 " set statusline+=%#Question#
@@ -1402,9 +1414,9 @@ endif
 " set statusline+=%#MoreMsg#
 " set statusline+=%y
 " set statusline+=%#DiffAdd#
-" set statusline+=\ %l:%v\ 
+" set statusline+=\ %l:%v\
 " set statusline+=%#SpellRare#
-" set statusline+=\ %P\ 
+" set statusline+=\ %P\
 
 
 " }}}
@@ -1489,84 +1501,6 @@ vnoremap <silent> <leader>cd :call NERDComment('x', 'uncomment')<cr>
 nnoremap <silent> <leader>cy :call NERDComment('n', 'yank')<cr>
 vnoremap <silent> <leader>cy :call NERDComment('x', 'yank')<cr>
 " }}}
-" 12) Startify {{{
-let g:startify_session_dir = expand('$VIMRUNTIME/sessions') 
-let g:startify_lists = [
-            \ {'type': 'sessions', 'header':['     Sessions']},
-            \ {'type': 'files', 'header':['     Files']},
-            \ {'type': 'dir', 'header':['     Files in ' . getcwd()]},
-            \ { 'type': 'bookmarks', 'header': ['   Bookmarks']      },
-            \ { 'type': 'commands',  'header': ['   Commands']       },
-            \ ]
-let g:startify_files_number = 30
-let g:startify_change_to_dir = 1
-let g:startify_padding_left = 5
-let g:startify_custom_indices = ['cc', 'dd', 'mm', 'nn', 'pp', 'rr', 'ww', 'xx', 'yy', 'zz']
-
-function! PLUGINS_ResetStartifyCustomHeader()
-    let l:startify_left_margin = 0
-    if &columns > 67
-        let l:startify_left_margin = repeat(' ', (winwidth('%') - 63)/2)
-        let g:startify_custom_header = [
-                    \ l:startify_left_margin . ' ___      ___ ___  _____ ______           ________    _____     ',
-                    \ l:startify_left_margin . '|\  \    /  /|\  \|\   _ \  _   \        |\   __  \  / __  \    ',
-                    \ l:startify_left_margin . '\ \  \  /  / \ \  \ \  \\\__\ \  \       \ \  \|\  \|\/_|\  \   ',
-                    \ l:startify_left_margin . ' \ \  \/  / / \ \  \ \  \\|__| \  \       \ \   __  \|/ \ \  \  ',
-                    \ l:startify_left_margin . '  \ \    / /   \ \  \ \  \    \ \  \       \ \  \|\  \ __\ \  \ ',
-                    \ l:startify_left_margin . '   \  __/ /     \ \__\ \__\    \ \__\       \ \_______|\__\ \__\',
-                    \ l:startify_left_margin . '    \|__|/       \|__|\|__|     \|__|        \|_______\|__|\|__|',
-                    \ l:startify_left_margin . '                                                                ',
-                    \ l:startify_left_margin . '                                                                ',
-                    \ ]
-
-    else
-        let l:startify_left_margin = repeat(' ', (winwidth('%') - 33)/2)
-        let g:startify_custom_header = [
-                    \ l:startify_left_margin . ' _    ________  ___   ____   ___ ',
-                    \ l:startify_left_margin . '| |  / /  _/  |/  /  ( __ ) <  / ',
-                    \ l:startify_left_margin . '| | / // // /|_/ /  / __  | / /  ',
-                    \ l:startify_left_margin . '| |/ // // /  / /  / /_/ / / /   ',
-                    \ l:startify_left_margin . '|___/___/_/  /_/   \____(_)_/    ',
-                    \ ]
-    endif
-
-    Startify
-endfunction
-
-
-if has('autocmd')
-    augroup Startify
-        autocmd!
-        autocmd VimEnter * if &filetype == "startify" | call PLUGINS_ResetStartifyCustomHeader() | endif
-        autocmd VimResized * if &filetype == "startify" | call PLUGINS_ResetStartifyCustomHeader() | endif
-    augroup END
-else
-    echoerr "[×] ERROR: NO AUTOCMD - Cannot automatically reset Startify Custom Header"
-endif
-
-
-" }}}
-" 13) Winresizer {{{
-let g:winresizer_enable = 1
-let g:winresizer_finish_with_escape = 1
-let g:winresizer_vert_resize = 5
-let g:winresizer_horiz_resize = 2
-
-nnoremap <leader>w :WinResizerStartFocus<cr>
-
-if has('autocmd')
-    augroup Winresizer
-        autocmd!
-        autocmd VimEnter unmap <C-E>
-        autocmd VimEnter unmap <C-a>
-    augroup END
-else
-    echoerr "[×] ERROR: NO AUTOCMD - Could not unmap unwanted winresizer shortcuts"
-endif
-
-
-" }}}
-
 
 cd C:\Users\m4rc0\Documents
 
