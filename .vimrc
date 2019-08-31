@@ -1,8 +1,9 @@
 set nocompatible                " vi compatible is LAME
 
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " I. Configuration
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" I. Configuration
 " 1) Quick variable initialization {{{
 
 " Store the VIMRUNTIME directory in a variable for later use
@@ -147,15 +148,15 @@ set magic               " Easier use of regex for searching
 " }}}
 " 8) Dictionaries {{{
 if has('spell')
-	let s:spell_directory = FromRuntime("spell")
+    let s:spell_directory = FromRuntime("spell")
     if !isdirectory(s:spell_directory) && exists("*mkdir")
-		call mkdir(s:spell_directory, "p")
-	endif
+        call mkdir(s:spell_directory, "p")
+    endif
 
     let &dictionary = s:spell_directory
     let &thesaurus .= FromRuntime("spell", "en_thesaurus.txt")
     set spell
-	set spelllang=en,es
+    set spelllang=en,es
 else
     echoerr "[×] ERROR: NO SPELL - Could not configure spell check"
 endif
@@ -173,8 +174,8 @@ set undolevels=999          " More undo (default=100)
 if has('persistent_undo')
     let s:undo_directory = FromRuntime("temp", "undo")
     if !isdirectory(s:undo_directory) && exists("*mkdir")
-		call mkdir(s:undo_directory, "p")
-	endif
+        call mkdir(s:undo_directory, "p")
+    endif
 
     let &undodir=s:undo_directory
     set undofile
@@ -366,10 +367,10 @@ endif
 " }}}
 " 17) Templates {{{
 if has("autocmd")
-	let s:templates_directory = FromRuntime("templates")
+    let s:templates_directory = FromRuntime("templates")
     if !isdirectory(s:templates_directory) && exists("*mkdir")
-		call mkdir(s:templates_directory, "p")
-	endif
+        call mkdir(s:templates_directory, "p")
+    endif
 
     augroup Templates
         let s:python_templates = FromRuntime("templates", "skeleton.py")
@@ -420,10 +421,10 @@ if has("terminal")
     cnoreabbrev hterm terminal ++kill=term ++close
     cnoreabbrev tterm execute "tabnew<bar>terminal ++kill=term ++curwin ++close"
 
-	let s:programming_directory = FromRuntime("programming")
+    let s:programming_directory = FromRuntime("programming")
     if !isdirectory(s:programming_directory) && exists("*mkdir")
-		call mkdir(s:programming_directory, "p")
-	endif
+        call mkdir(s:programming_directory, "p")
+    endif
 
     let g:conda_environment = "base"
     let g:vimrc_github = "https://github.com/M4rqu1705/vimrc"
@@ -431,6 +432,7 @@ if has("terminal")
     " Prepare PATH variables for ...
     let s:fd_directory = FromRuntime("programming", "fd")
     let s:fzf_directory = FromRuntime("programming", "fzf")
+    let s:miktex_directory = FromRuntime("programming", "miktex", "texmfs", "install", "miktex", "bin", "x64")
     let s:ripgrep_directory = FromRuntime("programming", "ripgrep")
     let s:wget_directory = FromRuntime("programming", "wget", "bin")
     let s:mingw_directory = FromRuntime("programming", "mingw", "bin")
@@ -443,6 +445,7 @@ if has("terminal")
     " Only retain variables if the directories exist
     if !isdirectory(s:fd_directory) | unlet s:fd_directory | endif
     if !isdirectory(s:fzf_directory) | unlet s:fzf_directory | endif
+    if !isdirectory(s:miktex_directory) | unlet s:miktex_directory | endif
     if !isdirectory(s:ripgrep_directory) | unlet s:ripgrep_directory | endif
     if !isdirectory(s:wget_directory) | unlet s:wget_directory | endif
     if !isdirectory(s:mingw_directory) | unlet s:mingw_directory | endif
@@ -461,6 +464,9 @@ if has("terminal")
     endif
     if $PATH !~? "fzf" && exists("s:fzf_directory")
         call add(s:relevant_paths, s:fzf_directory)
+    endif
+    if $PATH !~? "miktex" && exists("s:miktex_directory")
+        call add(s:relevant_paths, s:miktex_directory)
     endif
     if $PATH !~? "ripgrep" && exists("s:ripgrep_directory")
         call add(s:relevant_paths, s:ripgrep_directory)
@@ -1001,7 +1007,16 @@ endfunction
 
 " Function used to trim all trailing whitespaces in current file
 function! TrimAll()
-    execute '%s/\s\+$//'
+    try
+        execute '%s/\s\+$//'
+    catch
+        echo "Done!"
+    endtry
+    try
+        execute '%s/\r//'
+    catch
+        echo "Done!"
+    endtry
 endfunction
 
 " Function used to clear all registers quickly
@@ -1013,8 +1028,53 @@ function! ClearAllRegisters()
     execute "registers"
 endfunction
 
-" Function used to run the code in several ways as long as it is a supported
-" filetype
+" Function which will soon be used to open dynamic terminal window and run code
+function! RunCodeDynamically(output)
+    " Save file
+    write
+
+    " Prepare info and variables for later
+    let l:current_buffer = bufwinnr('%')
+    let l:terminal_buffer = -1
+
+    " Check if terminal in window already
+    if len(term_list()) > 0                     " If there exists terminals
+        for termNum in term_list()              " Cycle through them
+            if index(tabpagebuflist(), termNum) >= 0    " If term number inside tabpage buffer list
+                execute bufwinnr(termNum) . "wincmd w"
+                let l:terminal_buffer = termNum
+                break
+            else
+            endif
+        endfor
+    endif
+
+    " Open a new terminal window if no terminal in tabpage
+    if l:terminal_buffer < 0
+        if len( term_list() ) > 0
+            execute "bwipeout! " . join(term_list(), " ")
+        endif
+
+        if GetFontSize() > 12
+            execute "vert terminal ++kill=term ++close"
+        else
+            execute "terminal ++kill=term ++close"
+        endif
+
+        let l:terminal_buffer = get(term_list(), 0)
+    else
+        " If no need to open a new terminal, reset a currently open one
+        call term_sendkeys(l:terminal_buffer, "\<c-c>\<cr>clear\<cr>")
+    endif
+
+    " Send commands to the established terminal
+    call term_sendkeys(l:terminal_buffer, join(a:output, "\<cr>") . "\<cr>")
+
+    " execute l:current_buffer ."wincmd w"
+endfunction
+
+
+" Function used to run the code in several ways as long as it is a supported filetypes
 function! RunCode()
     if has("terminal")
         " Full path to current program
@@ -1022,53 +1082,14 @@ function! RunCode()
 
 
         if &filetype == 'python'
-        " Python --- Python --- Python --- Python --- Python --- Python ------
-            " Save file
-            write
+            " Python --- Python --- Python --- Python --- Python --- Python ------
 
-            " Prepare info and variables for later
-            let l:current_buffer = bufwinnr('%')
-            let l:terminal_buffer = -1
-            let l:output = [
+            let l:commands = [
                         \ "conda activate " . g:conda_environment,
                         \ "python " . l:full_path
                         \ ]
-
-
-            " Check if terminal in window already
-            if len(term_list()) > 0                     " If there exists terminals
-                for termNum in term_list()              " Cycle through them
-                    if index(tabpagebuflist(), termNum) >= 0    " If term number inside tabpage buffer list
-                        execute bufwinnr(termNum) . "wincmd w"
-                        let l:terminal_buffer = termNum
-                        break
-                    else
-                    endif
-                endfor
-            endif
-
-            " Open a new terminal window if no terminal in tabpage
-            if l:terminal_buffer < 0
-                if len( term_list() ) > 0
-                    execute "bwipeout! " . join(term_list(), " ")
-                endif
-
-                if GetFontSize() > 12
-                    execute "vert terminal ++kill=term ++close"
-                else
-                    execute "terminal ++kill=term ++close"
-                endif
-
-                let l:terminal_buffer = get(term_list(), 0)
-            else
-                " If no need to open a new terminal, reset a currently open one
-                call term_sendkeys(l:terminal_buffer, "\<c-c>\<cr>clear\<cr>")
-            endif
-
-            " Send commands to the established terminal
-            call term_sendkeys(l:terminal_buffer, join(l:output, "\<cr>") . "\<cr>")
-
-            " execute l:current_buffer ."wincmd w"
+            " Send these commands to another function to actually be run
+            call RunCodeDynamically(l:commands)
 
             " Python --- Python --- Python --- Python --- Python --- Python ------
 
@@ -1079,70 +1100,41 @@ function! RunCode()
             let l:runCodeScript = fnameescape(expand('$VIMRUNTIME/macros/runCode/compileAndDownloadToArduino.py'))
             execute "py3file " . l:runCodeScript
 
-
             " Arduino --- Arduino --- Arduino --- Arduino --- Arduino ------------
 
-        elseif &filetype == 'html' || &filetype == 'css' || &filetype == 'php'
-            " HTML --- CSS --- PHP --- HTML --- CSS --- PHP --- HTML --- CSS ---
+        elseif &filetype == 'tex' || &filetype == 'plaintex'
+            " LaTEX --- LaTEX --- LaTEX --- LaTEX --- LaTEX --- LaTEX ------------
+            let l:commands = [
+                        \ "texify --pdf --run-viewer " . l:full_path
+                        \ ]
+            " Send these commands to another function to actually be run
+            call RunCodeDynamically(l:commands)
+
+            " LaTEX --- LaTEX --- LaTEX --- LaTEX --- LaTEX --- LaTEX ------------
+
+        elseif &filetype == 'html' || &filetype == 'css' || &filetype == 'php' || &filetype == 'markdown'
+            " HTML --- CSS --- PHP --- Markdown --- HTML --- CSS --- PHP ---------
             write
 
             let l:runCodeScript = fnameescape(expand('$VIMRUNTIME/macros/runCode/changeAndRefreshScreen.py'))
             execute "py3file " . l:runCodeScript
 
-            " HTML --- CSS --- PHP --- HTML --- CSS --- PHP --- HTML --- CSS ---
+            " HTML --- CSS --- PHP --- Markdown --- HTML --- CSS --- PHP ---------
 
         elseif &filetype == 'javascript'
             echo("JS")
             execute "!node " . l:full_path
 
         elseif &filetype == 'cpp' || &filetype == 'c'
-            " Save file
-            write
-
-            " Prepare info and variables for later
-            let l:current_buffer = bufwinnr('%')
-            let l:terminal_buffer = -1
-            let l:output = [
+            " C --- C++ --- C --- C++ --- C --- C++ --- C --- C++ --- C --------
+            let l:commands = [
                         \ "g++ " . l:full_path,
                         \ "a.exe"
                         \ ]
+            " Send these commands to another function to actually be run
+            call RunCodeDynamically(l:commands)
 
-
-            " Check if terminal in window already
-            if len(term_list()) > 0                     " If there exists terminals
-                for termNum in term_list()              " Cycle through them
-                    if index(tabpagebuflist(), termNum) >= 0    " If term number inside tabpage buffer list
-                        execute bufwinnr(termNum) . "wincmd w"
-                        let l:terminal_buffer = termNum
-                        break
-                    else
-                    endif
-                endfor
-            endif
-
-            " Open a new terminal window if no terminal in tabpage
-            if l:terminal_buffer < 0
-                if len( term_list() ) > 0
-                    execute "bwipeout! " . join(term_list(), " ")
-                endif
-
-                if GetFontSize() > 12
-                    execute "vert terminal ++kill=term ++close"
-                else
-                    execute "terminal ++kill=term ++close"
-                endif
-
-                let l:terminal_buffer = get(term_list(), 0)
-            else
-                " If no need to open a new terminal, reset a currently open one
-                call term_sendkeys(l:terminal_buffer, "\<c-c>\<cr>clear\<cr>")
-            endif
-
-            " Send commands to the established terminal
-            call term_sendkeys(l:terminal_buffer, join(l:output, "\<cr>") . "\<cr>")
-
-            " execute l:current_buffer ."wincmd w"
-
+            " C --- C++ --- C --- C++ --- C --- C++ --- C --- C++ --- C --------
         else
             echoerr "[×] I don't know how to run the file"
         endif
@@ -1187,6 +1179,8 @@ endfunction
 nnoremap <silent> <m-.> :call SetFontSize(GetFontSize() + 1)<cr>:redraw<cr>:echo "Font size: " . GetFontSize()<cr>
 nnoremap <silent> <m-,> :call SetFontSize(GetFontSize() - 1)<cr>:redraw<cr>:echo "Font size: " . GetFontSize()<cr>
 
+
+" Work in progres ...
 function! CreateList()
     let l:separators = ['.', ')', '-']
     let l:regex = '^\(\s*\)\(\d\{1,\}\)\([' . join(l:separators, '') . ']\).*$'
@@ -1198,7 +1192,7 @@ function! CreateList()
         let l:separator = substitute(l:previous_line, l:regex, '\3', '')
         execute "normal! cc" . (l:number + 1) . l:separator . " "
     endif
-endfunc
+endfunction
 
 
 " }}}
@@ -1242,6 +1236,9 @@ Plug 'StanAngeloff/php.vim'
 
 " Python
 Plug 'davidhalter/jedi-vim'
+
+" LaTEX
+Plug 'gi1242/vim-tex-syntax'
 
 call plug#end()
 
@@ -1287,7 +1284,7 @@ let g:AutoPairsUseInsertedCount = 1
 let g:AutoPairsMapCh = 0
 
 if has('autocmd')
-    augroup ALE
+    augroup AutoPairs
         autocmd!
         autocmd VimEnter unmap <M-p>
         autocmd VimEnter unmap <M-e>
@@ -1331,9 +1328,9 @@ endif
 " Change some Emmet settings
 let g:user_emmet_settings = {
             \ 'html' : {
-                \ 'quote_char': "'",
+            \ 'quote_char': "'",
             \ },
-        \ }
+            \ }
 
 
 " }}}
@@ -1380,11 +1377,11 @@ let g:fzf_layout = { 'down': '~10' }
 " }}}
 " 7) Jedi {{{
 
-    let g:jedi#auto_initialization = 1
-    let g:jedi#use_splits_not_buffers = "left"
-    let g:jedi#show_call_signatures = 1
-    let g:jedi#show_call_signatures_delay = 500
-    let g:jedi#completions_enabled = 1
+let g:jedi#auto_initialization = 1
+let g:jedi#use_splits_not_buffers = "left"
+let g:jedi#show_call_signatures = 1
+let g:jedi#show_call_signatures_delay = 500
+let g:jedi#completions_enabled = 1
 
 " }}}
 " 8) Lightline {{{
