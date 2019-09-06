@@ -7,9 +7,15 @@ set nocompatible                " vi compatible is LAME
 " 1) Quick variable initialization {{{
 
 " Store the VIMRUNTIME directory in a variable for later use
-let s:vim_runtime_directory = expand('$VIMRUNTIME')
+let s:vim_runtime_directory = ""
+if getfperm(s:vim_runtime_directory)[4] == '-' && expand($USER) != "root"
+    let s:vim_runtime_directory = expand('$VIMRUNTIME')
+else
+    let s:vim_runtime_directory = expand('$HOME/.vim')
+endif
+
 " Store the directory separator in a variable for later use
-let s:directory_separator = (match(s:vim_runtime_directory, "\/") > 0) ? '/' : '\'
+let s:directory_separator = (match(s:vim_runtime_directory, "\/") >= 0) ? '/' : '\'
 
 " Generate path from $VIMRUNTIME depending on its directory and separators
 function! FromRuntime(...)
@@ -23,6 +29,8 @@ function! FromRuntime(...)
         if exists("*trim")
             " And append trimmed directory level
             let l:output_directory .= trim(level)
+        else
+            let l:output_directory .= level
         endif
     endfor
 
@@ -30,7 +38,7 @@ function! FromRuntime(...)
 endfunction
 
 " Store the VIMRC path to a variable
-let g:vimrc_path = FromRuntime("..", "..", "..", "Data", "settings", "_vimrc")
+let g:vimrc_path = expand('$HOME/.vimrc')
 
 
 " }}}
@@ -54,7 +62,8 @@ set numberwidth=4               " Set line number width
 set noshowmode                  " Do not show the current mode
 set showcmd                     " Show currently-typed command
 set title                       " Show tab titles
-set visualbell                  " Use visual bell instead of beeping when doing something wrong
+set noerrorbells                " Do not use error bells when doing something wrong
+set novisualbell                " Do not use visual bell either when doing something wrong
 set laststatus=2                " Make the last line where the status is two lines deep so you can see status always
 set background=dark             " Use colours that work well on a dark background (Console is usually black)
 set clipboard=unnamed           " Set clipboard to unnamed to access the system clipboard under Windows
@@ -1202,7 +1211,7 @@ endfunction
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " 1) Setup {{{
 
-call plug#begin('$VIMRUNTIME/plugged')
+call plug#begin(FromRuntime('plugged'))
 " Interface
 Plug 'itchyny/lightline.vim'
 Plug 'webdevel/tabulous'
@@ -1499,7 +1508,11 @@ nnoremap <silent> <leader>cy :call NERDComment('n', 'yank')<cr>
 vnoremap <silent> <leader>cy :call NERDComment('x', 'yank')<cr>
 " }}}
 
-cd C:\Users\m4rc0\Documents
+try
+    cd C:\Users\m4rc0\Documents
+catch
+    echo "Cannot find C:\\Users\\m4rc0\\Documents"
+endtry
 
 
 " vim:foldmethod=marker:foldlevel=0
