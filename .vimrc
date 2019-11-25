@@ -7,15 +7,9 @@ set nocompatible                " vi compatible is LAME
 " 1) Quick variable initialization {{{
 
 " Store the VIMRUNTIME directory in a variable for later use
-let s:vim_runtime_directory = ""
-if getfperm(s:vim_runtime_directory)[4] == '-' && expand($USER) != "root"
-    let s:vim_runtime_directory = expand('$VIMRUNTIME')
-else
-    let s:vim_runtime_directory = expand('$HOME/.vim')
-endif
-
+let s:vim_runtime_directory = expand('$VIMRUNTIME')
 " Store the directory separator in a variable for later use
-let s:directory_separator = (match(s:vim_runtime_directory, "\/") >= 0) ? '/' : '\'
+let s:directory_separator = (match(s:vim_runtime_directory, "\/") > 0) ? '/' : '\'
 
 " Generate path from $VIMRUNTIME depending on its directory and separators
 function! FromRuntime(...)
@@ -29,8 +23,6 @@ function! FromRuntime(...)
         if exists("*trim")
             " And append trimmed directory level
             let l:output_directory .= trim(level)
-        else
-            let l:output_directory .= level
         endif
     endfor
 
@@ -38,7 +30,7 @@ function! FromRuntime(...)
 endfunction
 
 " Store the VIMRC path to a variable
-let g:vimrc_path = expand('$HOME/.vimrc')
+let g:vimrc_path = FromRuntime("..", "..", "..", "Data", "settings", "_vimrc")
 
 
 " }}}
@@ -62,8 +54,7 @@ set numberwidth=4               " Set line number width
 set noshowmode                  " Do not show the current mode
 set showcmd                     " Show currently-typed command
 set title                       " Show tab titles
-set noerrorbells                " Do not use error bells when doing something wrong
-set novisualbell                " Do not use visual bell either when doing something wrong
+set visualbell                  " Use visual bell instead of beeping when doing something wrong
 set laststatus=2                " Make the last line where the status is two lines deep so you can see status always
 set background=dark             " Use colours that work well on a dark background (Console is usually black)
 set clipboard=unnamed           " Set clipboard to unnamed to access the system clipboard under Windows
@@ -367,7 +358,8 @@ if has('mksession')
     endif
 
     let s:sessions_directory = FromRuntime("temp", "sessions", "")
-    execute 'cnoreabbrev mks mksession! ' . s:sessions_directory
+    execute 'cnoreabbrev mksess mksession! ' . s:sessions_directory
+    execute 'cnoreabbrev sosess source ' . s:sessions_directory
 else
     echoerr "[×] ERROR: NO SESSIONS - Could not configure vim sessions"
 endif
@@ -1211,17 +1203,18 @@ endfunction
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " 1) Setup {{{
 
-call plug#begin(FromRuntime('plugged'))
+call plug#begin('$VIMRUNTIME/plugged')
 " Interface
 Plug 'itchyny/lightline.vim'
 Plug 'webdevel/tabulous'
 
 " General programming tools
-" Plug 'w0rp/ale'
+Plug 'dense-analysis/ale'
 Plug 'junegunn/fzf'
 Plug 'junegunn/fzf.vim'
 " Plug 'skywind3000/asyncrun.vim'
 Plug 'vim-scripts/auto-pairs-gentle'
+Plug 'frazrepo/vim-rainbow'
 Plug 'scrooloose/nerdcommenter'
 Plug 'tpope/vim-surround'
 Plug 'tpope/vim-repeat'
@@ -1232,7 +1225,7 @@ Plug 'easymotion/vim-easymotion'
 Plug 'jacoborus/tender.vim'
 Plug 'crusoexia/vim-monokai'
 
-" Speciic programming tools
+" Specific programming tools
 " HTML
 Plug 'othree/html5.vim'
 Plug 'mattn/emmet-vim'
@@ -1244,13 +1237,11 @@ Plug 'ap/vim-css-color'
 Plug 'StanAngeloff/php.vim'
 
 " Python
-Plug 'davidhalter/jedi-vim'
 
 " LaTEX
 Plug 'gi1242/vim-tex-syntax'
 
 call plug#end()
-
 
 " }}}
 " 2) ALE {{{
@@ -1383,17 +1374,9 @@ let g:fzf_layout = { 'down': '~10' }
 " <c-x> - Horizontal Split
 " <c-t> - New tab
 
-" }}}
-" 7) Jedi {{{
-
-let g:jedi#auto_initialization = 1
-let g:jedi#use_splits_not_buffers = "left"
-let g:jedi#show_call_signatures = 1
-let g:jedi#show_call_signatures_delay = 500
-let g:jedi#completions_enabled = 1
 
 " }}}
-" 8) Lightline {{{
+" 7) Lightline {{{
 let g:lightline = {
             \ 'colorscheme': 'wombat'
             \ }
@@ -1426,7 +1409,7 @@ endif
 
 
 " }}}
-" 9) Matchit {{{
+" 8) Matchit {{{
 " Load matchit.vim, but only if the user hasn't installed a newer version.
 if !exists('g:loaded_matchit') && findfile('plugin/matchit.vim', &rtp) ==# ''
     runtime! macros/matchit.vim
@@ -1434,7 +1417,7 @@ endif
 
 
 " }}}
-" 10) NETRW {{{
+" 9) NETRW {{{
 " https://blog.stevenocchipinti.com/2016/12/28/using-netrw-instead-of-nerdtree-for-vim/
 " http://vimcasts.org/episodes/the-file-explorer/
 let g:netrw_banner = 0
@@ -1491,7 +1474,7 @@ endif
 
 
 " }}}
-" 11) NerdCommenter {{{
+" 10) NerdCommenter {{{
 let g:NERDSpaceDelims = 1
 let g:NERDCompactSexyComs = 0
 let g:NERDCommentEmptyLines = 0
@@ -1506,13 +1489,16 @@ nnoremap <silent> <leader>cd :call NERDComment('n', 'uncomment')<cr>
 vnoremap <silent> <leader>cd :call NERDComment('x', 'uncomment')<cr>
 nnoremap <silent> <leader>cy :call NERDComment('n', 'yank')<cr>
 vnoremap <silent> <leader>cy :call NERDComment('x', 'yank')<cr>
+
+
+" }}}
+" 11) Vim Rainbow {{{
+let g:rainbow_active = 1
+
+
 " }}}
 
-try
-    cd C:\Users\m4rc0\Documents
-catch
-    echo "Cannot find C:\\Users\\m4rc0\\Documents"
-endtry
+cd C:\Users\m4rc0\Documents
 
 
 " vim:foldmethod=marker:foldlevel=0
