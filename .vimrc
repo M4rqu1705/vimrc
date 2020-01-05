@@ -4,33 +4,46 @@ set nocompatible                " vi compatible is LAME
 " I. Configuration
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " I. Configuration
-" 1) Quick variable initialization {{{
+" 1) Helper functions {{{
 
-" Store the VIMRUNTIME directory in a variable for later use
-let s:vim_runtime_directory = expand('$VIMRUNTIME')
+" Detect OS
+let s:OS = ''
+if has('win32') || has('win64') || has('win16') || has('win95') || has('win32unix')
+    let s:OS = 'Windows'
+elseif has('unix')
+    let s:OS = 'Unix'
+elseif has('macunix')
+    let s:OS = 'Mac'
+endif
+
 " Store the directory separator in a variable for later use
 let s:directory_separator = (match(s:vim_runtime_directory, "\/") > 0) ? '/' : '\'
 
-" Generate path from $VIMRUNTIME depending on its directory and separators
-function! FromRuntime(...)
-    " Begin preparing output_directory local variable
-    let l:output_directory = s:vim_runtime_directory
-
-    " Iterate through each element in function parameter list 
-    for level in a:000
-        " Append separator to output_directory ... 
-        let l:output_directory .= s:directory_separator
+" Generate path depending on its directory and separators
+function! ComposeDirectory(...)
+    " Iterate through each element in function parameter list
+    let l:directory = a:000[0]
+    for level in a:000[1:]
+        " Append separator to output_directory ...
+        let l:directory .= s:directory_separator
         if exists("*trim")
             " And append trimmed directory level
-            let l:output_directory .= trim(level)
+            let l:directory .= trim(level)
+        else
+            let l:directory .= level
         endif
     endfor
 
-    return fnameescape(l:output_directory)
+    return fnameescape(l:directory)
 endfunction
 
 " Store the VIMRC path to a variable
-let g:vimrc_path = FromRuntime("..", "..", "..", "Data", "settings", "_vimrc")
+let g:vimrc_path = ''
+if s:OS == 'Windows'
+    let g:vimrc_path = ComposeDirectory($HOME, "_vimrc")
+else
+    let g:vimrc_path = ComposeDirectory($HOME, ".vimrc")
+endif
 
 
 " }}}
@@ -42,8 +55,8 @@ filetype plugin indent on
 
 " }}}
 " 3) Windows {{{
-set splitbelow
-set splitright
+set splitbelow                  " Split windows below by default
+set splitright                  " Split windows to the right by default
 
 
 " }}}
@@ -108,7 +121,7 @@ if has("gui_running")
         augroup GUI
             autocmd!
             " Download dlls from https://github.com/mattn/vimtweak
-            autocmd VimEnter * 
+            autocmd VimEnter *
                         \ if !empty("vimtweak32.dll") |
                         \ silent! call libcallnr("vimtweak32.dll", "EnableCaption", 0) |
                         \ silent! call libcallnr("vimtweak32.dll", "EnableMaximize", 1) |
@@ -127,8 +140,8 @@ if has('autocmd')
     augroup Themes
         autocmd!
         " autocmd VimEnter * colorscheme tender
-        " autocmd VimEnter * colorscheme onehalfdark
-        autocmd VimEnter * silent! colorscheme monokai
+        autocmd VimEnter * colorscheme onehalfdark
+        " autocmd VimEnter * silent! colorscheme monokai
     augroup END
 else
     echoerr "[×] ERROR: NO AUTOCMD - Could not set colorscheme"
@@ -139,7 +152,7 @@ endif
 " 7) Searching {{{
 set incsearch           " Show temporary search results as being typed
 set ignorecase
-set smartcase           " Ignore case when pattern contains lower-case letters
+set smartcase           " Ignore case when pattern contains only lower-case letters
 set showmatch           " Automatically show matching brackets.
 set magic               " Easier use of regex for searching
 " set gdefault            " Always use g flag on substitutions
@@ -148,13 +161,13 @@ set magic               " Easier use of regex for searching
 " }}}
 " 8) Dictionaries {{{
 if has('spell')
-    let s:spell_directory = FromRuntime("spell")
+    let s:spell_directory = ComposeDirectory($VIMRUNTIME, "spell")
     if !isdirectory(s:spell_directory) && exists("*mkdir")
         call mkdir(s:spell_directory, "p")
     endif
 
     let &dictionary = s:spell_directory
-    let &thesaurus .= FromRuntime("spell", "en_thesaurus.txt")
+    let &thesaurus .= ComposeDirectory($VIMRUNTIME, "spell", "en_thesaurus.txt")
     set spell
     set spelllang=en,es
 else
@@ -172,7 +185,7 @@ endif
 set history=999             " Increase history (default = 20)
 set undolevels=999          " More undo (default=100)
 if has('persistent_undo')
-    let s:undo_directory = FromRuntime("temp", "undo")
+    let s:undo_directory = ComposeDirectory($VIMRUNTIME, "temp", "undo")
     if !isdirectory(s:undo_directory) && exists("*mkdir")
         call mkdir(s:undo_directory, "p")
     endif
@@ -189,9 +202,9 @@ endif
 set autoindent                          " Set auto-indenting on for programming
 set wrap
 set wrapmargin=2
-set textwidth=80
+set textwidth=100
 set linebreak
-set showbreak=\.\.\.\ 
+set showbreak=\.\.\.\
 set nolist
 set formatoptions=tcnBjq2     " Describes automatic formatting
 " t - Auto-wrap text using textwidth
@@ -203,10 +216,17 @@ set formatoptions=tcnBjq2     " Describes automatic formatting
 " a - Automatic formatting of paragraphs
 " 2 - Indent second line of a paragraph for the rest of the paragraph
 
-set tabstop=4
-set softtabstop=4                       " Show existing tab with 4 spaces width
-set shiftwidth=4                        " When indenting with '>', use 4 spaces width
-set expandtab                           " On pressing tab, insert 4 spaces
+if !exists('g:tab_size')
+    set tabstop=4
+    set softtabstop=4                       " Show existing tab with 4 spaces width
+    set shiftwidth=4                        " When indenting with '>', use 4 spaces width
+else
+    set tabstop=g:tab_size
+    set softtabstop=g:tab_size              " Show existing tab with 4 spaces width
+    set shiftwidth=g:tab_size               " When indenting with '>', use 4 spaces width
+endif
+
+set expandtab                           " On pressing tab, insert spaces
 set noshiftround
 set nostartofline                       " Make sure cursor remains where it is
 
@@ -357,7 +377,7 @@ if has('mksession')
         echoerr "[×] ERROR: NO AUTOCMD - Did not configure vim sessions"
     endif
 
-    let s:sessions_directory = FromRuntime("temp", "sessions", "")
+    let s:sessions_directory = ComposeDirectory($VIMRUNTIME"temp", "sessions", "")
     execute 'cnoreabbrev mksess mksession! ' . s:sessions_directory
     execute 'cnoreabbrev sosess source ' . s:sessions_directory
 else
@@ -368,13 +388,13 @@ endif
 " }}}
 " 17) Templates {{{
 if has("autocmd")
-    let s:templates_directory = FromRuntime("templates")
+    let s:templates_directory = ComposeDirectory($VIMRUNTIME, "templates")
     if !isdirectory(s:templates_directory) && exists("*mkdir")
         call mkdir(s:templates_directory, "p")
     endif
 
     augroup Templates
-        let s:python_templates = FromRuntime("templates", "skeleton.py")
+        let s:python_templates = ComposeDirectory($VIMRUNTIME, "templates", "skeleton.py")
         autocmd!
 
         " Python files
@@ -396,7 +416,6 @@ function! DevelopmentEnvironment()
 
         tabnew
 
-        Startify
         let l:current_window = bufwinnr('%')
 
         execute "term ++kill=term ++close ++rows=" . str2nr(&lines) / 4
@@ -422,25 +441,25 @@ if has("terminal")
     cnoreabbrev hterm terminal ++kill=term ++close
     cnoreabbrev tterm execute "tabnew<bar>terminal ++kill=term ++curwin ++close"
 
-    let s:programming_directory = FromRuntime("programming")
+    let s:programming_directory = ComposeDirectory($VIMRUNTIME, "programming")
     if !isdirectory(s:programming_directory) && exists("*mkdir")
         call mkdir(s:programming_directory, "p")
     endif
 
-    let g:conda_environment = "base"
+    let g:venv_environment = ""
     let g:vimrc_github = "https://github.com/M4rqu1705/vimrc"
 
     " Prepare PATH variables for ...
-    let s:fd_directory = FromRuntime("programming", "fd")
-    let s:fzf_directory = FromRuntime("programming", "fzf")
-    let s:miktex_directory = FromRuntime("programming", "miktex", "texmfs", "install", "miktex", "bin", "x64")
-    let s:ripgrep_directory = FromRuntime("programming", "ripgrep")
-    let s:wget_directory = FromRuntime("programming", "wget", "bin")
-    let s:mingw_directory = FromRuntime("programming", "mingw", "bin")
-    let s:python_directory = FromRuntime("programming", "WPy-3710", "python-3.7.1")
+    let s:fd_directory = ComposeDirectory($VIMRUNTIME, "programming", "fd")
+    let s:fzf_directory = ComposeDirectory($VIMRUNTIME, "programming", "fzf")
+    let s:miktex_directory = ComposeDirectory($VIMRUNTIME, "programming", "miktex", "texmfs", "install", "miktex", "bin", "x64")
+    let s:ripgrep_directory = ComposeDirectory($VIMRUNTIME, "programming", "ripgrep")
+    let s:wget_directory = ComposeDirectory($VIMRUNTIME, "programming", "wget", "bin")
+    let s:mingw_directory = ComposeDirectory($VIMRUNTIME, "programming", "mingw", "bin")
+    let s:python_directory = ComposeDirectory($VIMRUNTIME, "programming", "WPy-3710", "python-3.7.1")
     let s:git_directories = [
-                \ FromRuntime("programming", "Git", "bin"),
-                \ FromRuntime("programming", "Git", "usr", "bin")
+                \ ComposeDirectory($VIMRUNTIME, "programming", "Git", "bin"),
+                \ ComposeDirectory($VIMRUNTIME, "programming", "Git", "usr", "bin")
                 \ ]
 
     " Only retain variables if the directories exist
@@ -478,7 +497,7 @@ if has("terminal")
     if $PATH !~? "mingw" && exists("s:mingw_directory")
         call add(s:relevant_paths, s:mingw_directory)
     endif
-    if $PATH !~? "python" && $PATH !~? "conda" && exists("s:python_directory")
+    if $PATH !~? "python" && exists("s:python_directory")
         call add(s:relevant_paths, s:python_directory)
     endif
     if $PATH !~? "git" && exists("s:git_directories")
@@ -520,8 +539,8 @@ endif
 
 " Set the python3 home and dll directory, crucial to use Python in Vim
 if has('python_dynamic')
-    let &pythonthreehome = FromRuntime("programming", "WPy-3710", "python-3.7.1")
-    let &pythonthreedll = FromRuntime("programming", "WPy-3710", "python-3.7.1", "python37.dll")
+    let &pythonthreehome = ComposeDirectory($VIMRUNTIME, "programming", "WPy-3710", "python-3.7.1")
+    let &pythonthreedll = ComposeDirectory($VIMRUNTIME, "programming", "WPy-3710", "python-3.7.1", "python37.dll")
 endif
 
 
@@ -531,29 +550,13 @@ if has('autocmd')
     augroup Programming
         autocmd!
 
-        autocmd BufWinEnter *.py try | execute "normal! gg=G" | execute "%s/\r//g" | catch | echo "" | endtry
-        autocmd Filetype *.py let g:jedi#auto_initialization=1
+        autocmd BufWinEnter *.py try | execute "set foldmethod=indent" | execute "%s/\r//g" | catch | echo "" | endtry
 
         autocmd BufWinEnter *.html try | execute "normal! gg=G" | execute "%s/\r//g" | catch | echo "" | endtry
 
     augroup END
 endif
 
-
-function! CodeQuestSetup()
-    let g:conda_environment = 'CodeQuest'
-    let g:jedi#auto_initialization=1
-
-    if has('autocmd')
-        augroup CodeQuest
-            autocmd!
-
-            autocmd BufWinEnter *.py try | execute "%s/\r//g" | catch | echo "" | endtry
-
-        augroup END
-    endif
-
-endfunction
 
 " }}}
 
@@ -692,7 +695,7 @@ function! QuickSetup()
     if confirm("Do you want to download Vim Plug?", "&Yes\n&No") == 1
 
         " Where to download Vim Plug
-        let l:vim_autoload = FromRuntime("autoload")
+        let l:vim_autoload = ComposeDirectory($VIMRUNTIME, "autoload")
         " From where to download Vim Plug
         let l:vim_plug_link = "https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim"
 
@@ -735,7 +738,7 @@ function! QuickSetup()
                     \ "if __name__ == '__main__':\n" .
                     \ "\tmain()"
 
-        execute "tabnew " . FromRuntime("templates", "skeleton.py") . " | normal! ggVGc" . l:contents . "\<esc>:wq!\<cr>"
+        execute "tabnew " . ComposeDirectory($VIMRUNTIME, "templates", "skeleton.py") . " | normal! ggVGc" . l:contents . "\<esc>:wq!\<cr>"
 
         " Add more templates ....
 
@@ -1084,11 +1087,20 @@ function! RunCode()
 
         if &filetype == 'python'
             " Python --- Python --- Python --- Python --- Python --- Python ------
+            write
 
+            let l:commands = []
+            if g:venv_environment == ""
             let l:commands = [
-                        \ "conda activate " . g:conda_environment,
                         \ "python " . l:full_path
                         \ ]
+            else
+            let l:commands = [
+                        \ "venv activate " . g:venv_environment,
+                        \ "activate",
+                        \ "python " . l:full_path
+                        \ ]
+            endif
             " Send these commands to another function to actually be run
             call RunCodeDynamically(l:commands)
 
@@ -1136,6 +1148,19 @@ function! RunCode()
             call RunCodeDynamically(l:commands)
 
             " C --- C++ --- C --- C++ --- C --- C++ --- C --- C++ --- C --------
+        elseif &filetype == 'java'
+            " Java --- Java --- Java --- Java --- Java --- Java  --- Java ------
+            write
+            Cdhere
+
+            let l:commands = [
+                        \ "javac " . l:full_path,
+                        \ "java " . expand("%:t:r")
+                        \ ]
+            " Send these commands to another function to actually be run
+            call RunCodeDynamically(l:commands)
+
+            " Java --- Java --- Java --- Java --- Java --- Java  --- Java ------
         else
             echoerr "[×] I don't know how to run the file"
         endif
@@ -1245,36 +1270,40 @@ call plug#end()
 
 " }}}
 " 2) ALE {{{
-" let g:ale_enabled = 1
-" let g:ale_fix_on_save = 0
-" let g:ale_lint_delay = 0
-" let g:ale_lint_on_enter = 1
-" let g:ale_lint_on_insert_leave = 1
-" let g:ale_lint_on_save = 1
-" let g:ale_lint_on_text_changed = 'never'
-" let g:ale_list_vertical = 1
-" let g:ale_set_highlights = 1
-" let g:ale_warn_about_trailing_whitespace = 1
-" let g:ale_virtualtext_cursor = 1
+let g:ale_enabled = 1
+let g:ale_fix_on_save = 0
+let g:ale_lint_delay = 0
+let g:ale_lint_on_enter = 1
+let g:ale_lint_on_insert_leave = 1
+let g:ale_lint_on_save = 1
+let g:ale_lint_on_text_changed = 'never'
+let g:ale_list_vertical = 1
+let g:ale_set_highlights = 1
+let g:ale_warn_about_trailing_whitespace = 1
+let g:ale_history_enable = 0
+let g:ale_history_log_output = 0
+let g:ale_keep_list_window_open = 0
 
-" let g:ale_sign_error = '×'
+let g:ale_sign_error = '×'
+let g:ale_sign_style_warning = '-'
+let g:ale_sign_warning = '!'
+let g:ale_sign_column_always = 1
 
-" let g:ale_linters_explicit = 1
+
+let g:ale_linters_explicit = 1
 let g:ale_linters = {
             \ 'python': ['pyflakes'],
             \ 'javascript': ['eslint'],
             \ }
 
-let g:ale_python_pyflakes_executable = 'python'
-let g:ale_open_list=1
 
 
-" nmap <silent> <leader>gd :ALEGoToTypeDefinitionInVSplit<cr>
-" nmap <silent> <leader>gdt :ALEGoToTypeDefinitionInTab<cr>
-" nmap <silent> <leader>gds :ALEGoToTypeDefinitionInSplit<cr>
-" nmap <silent> <leader>fr :ALEFindReferences<cr>
-" nmap <silent> <leader>aj :ALENext<cr>
-" nmap <silent> <leader>ak :ALEPrevious<cr>
+nmap <silent> <leader>gd :ALEGoToTypeDefinitionInVSplit<cr>
+nmap <silent> <leader>gdt :ALEGoToTypeDefinitionInTab<cr>
+nmap <silent> <leader>gds :ALEGoToTypeDefinitionInSplit<cr>
+nmap <silent> <leader>fr :ALEFindReferences<cr>
+nmap <silent> <leader>aj :ALENext<cr>
+nmap <silent> <leader>ak :ALEPrevious<cr>
 
 
 " }}}
@@ -1498,7 +1527,9 @@ let g:rainbow_active = 1
 
 " }}}
 
-cd C:\Users\m4rc0\Documents
+if isdirectory('C:\Users\m4rc0\Desktop')
+    cd C:\Users\m4rc0
+endif
 
 
 " vim:foldmethod=marker:foldlevel=0
