@@ -17,7 +17,7 @@ elseif has('macunix')
 endif
 
 " Store the directory separator in a variable for later use
-let s:directory_separator = (match(s:vim_runtime_directory, "\/") > 0) ? '/' : '\'
+let s:directory_separator = (match($VIMRUNTIME, "\/") > 0) ? '/' : '\'
 
 " Generate path depending on its directory and separators
 function! ComposeDirectory(...)
@@ -53,6 +53,7 @@ set viminfo='999,<50,s10,h,%,/0,:99,@99
 filetype plugin indent on
 
 
+
 " }}}
 " 3) Windows {{{
 set splitbelow                  " Split windows below by default
@@ -80,13 +81,17 @@ set cmdheight=2                 " Make the ex command line 2 lines high
 set t_Co=256                    " Make sure Vim is using 256 colors
 set ttyfast                     " Smoother screen redraw
 set lazyredraw                  " The screen will not be redrawn so frequently
+" set redrawtime=100
 set wildmenu                    " Show recommendations in the ex command line
 syntax on                       " Turn syntax highlighting on by default
 " set foldcolumn=1                " Add a little margin to the left
+" set listchars=eol:$,tab:├─,space:·,trail:█,precedes:«,extends:»
+let &listchars = "eol:$,tab:├─,space:·,trail:█,precedes:«,extends:»"
 
 " Enable the use of mice if they are available
 if has('mouse')
     set mouse=a
+    set nomousefocus
 endif
 
 " For making everything UTF-8
@@ -116,6 +121,7 @@ if has("gui_running")
     set t_Co=256
     set cursorline                  " Highlight line with cursor
     set cursorcolumn                " Highlight column with cursor
+    set linespace=5                " Space between lines
     " Maximize the screen on enter if has autocmd
     if has('autocmd')
         augroup GUI
@@ -135,7 +141,6 @@ endif
 
 " }}}
 " 6) Themes {{{
-
 if has('autocmd')
     augroup Themes
         autocmd!
@@ -155,6 +160,7 @@ set ignorecase
 set smartcase           " Ignore case when pattern contains only lower-case letters
 set showmatch           " Automatically show matching brackets.
 set magic               " Easier use of regex for searching
+set path=.,../.,,
 " set gdefault            " Always use g flag on substitutions
 
 
@@ -184,6 +190,7 @@ endif
 " 9) History and file handling {{{
 set history=999             " Increase history (default = 20)
 set undolevels=999          " More undo (default=100)
+
 if has('persistent_undo')
     let s:undo_directory = ComposeDirectory($VIMRUNTIME, "temp", "undo")
     if !isdirectory(s:undo_directory) && exists("*mkdir")
@@ -198,7 +205,21 @@ endif
 
 
 " }}}
-" 10) Whitespace {{{
+" 10) Digraphs {{{
+if has('digraphs')
+    set nodigraph
+    inoremap <leader>d <c-k>
+else
+    echoerr '[✗] No digraphs available'
+endif
+
+" Use <c-k> {char1}{char2} to enter digraphs
+" Use `:dig` or `:digraphs` to see which digraphs are available
+" Or use :help digraph-table to show all digraphs and search for them
+
+
+" }}}
+" 11) Whitespace {{{
 set autoindent                          " Set auto-indenting on for programming
 set wrap
 set wrapmargin=2
@@ -221,9 +242,9 @@ if !exists('g:tab_size')
     set softtabstop=4                       " Show existing tab with 4 spaces width
     set shiftwidth=4                        " When indenting with '>', use 4 spaces width
 else
-    set tabstop=g:tab_size
-    set softtabstop=g:tab_size              " Show existing tab with 4 spaces width
-    set shiftwidth=g:tab_size               " When indenting with '>', use 4 spaces width
+    let &tabstop=g:tab_size
+    let &softtabstop=g:tab_size              " Show existing tab with 4 spaces width
+    let &shiftwidth=g:tab_size               " When indenting with '>', use 4 spaces width
 endif
 
 set expandtab                           " On pressing tab, insert spaces
@@ -232,13 +253,13 @@ set nostartofline                       " Make sure cursor remains where it is
 
 
 " }}}
-" 11) Keys {{{
+" 12) Keys {{{
 set backspace=indent,eol,start      " Allow backspacing over everything.
 set timeoutlen=2000                 " How long it wait for mapped commands
 
 
 " }}}
-" 12) Autocomplete {{{
+" 13) Autocomplete {{{
 set omnifunc=syntaxcomplete#Complete
 set complete=.,w,b,d,u,t
 set completeopt=longest,menuone,preview
@@ -266,7 +287,7 @@ inoremap <expr> <s-tab> pumvisible() ? "\<c-o>" : "\<c-x>\<c-o>"
 
 
 " }}}
-" 13) Code folding {{{
+" 14) Code folding {{{
 if has('folding')
     set foldenable              " Enable code folding and show all folds
     set foldmethod=manual
@@ -286,7 +307,7 @@ endif
 
 
 " }}}
-" 14) Diff {{{
+" 15) Diff {{{
 if has('autocmd')
     augroup Diff
         autocmd!
@@ -343,14 +364,14 @@ endfunction
 
 
 " }}}
-" 15) Backup and Swap Files {{{
+" 16) Backup and Swap Files {{{
 set nobackup
 set nowritebackup
 set noswapfile
 
 
 " }}}
-" 16) Sessions {{{
+" 17) Sessions {{{
 if has('mksession')
     if has('autocmd')
         let s:session_options = [
@@ -377,7 +398,7 @@ if has('mksession')
         echoerr "[×] ERROR: NO AUTOCMD - Did not configure vim sessions"
     endif
 
-    let s:sessions_directory = ComposeDirectory($VIMRUNTIME"temp", "sessions", "")
+    let s:sessions_directory = ComposeDirectory($VIMRUNTIME, "temp", "sessions", "")
     execute 'cnoreabbrev mksess mksession! ' . s:sessions_directory
     execute 'cnoreabbrev sosess source ' . s:sessions_directory
 else
@@ -386,7 +407,7 @@ endif
 
 
 " }}}
-" 17) Templates {{{
+" 18) Templates {{{
 if has("autocmd")
     let s:templates_directory = ComposeDirectory($VIMRUNTIME, "templates")
     if !isdirectory(s:templates_directory) && exists("*mkdir")
@@ -405,7 +426,7 @@ endif
 
 
 " }}}
-" 18) Terminal {{{
+" 19) Terminal {{{
 function! DevelopmentEnvironment()
     if has("terminal")
         call SetFontSize(12)
@@ -545,7 +566,7 @@ endif
 
 
 " }}}
-" 19) Programming {{{
+" 20) Programming {{{
 if has('autocmd')
     augroup Programming
         autocmd!
@@ -600,7 +621,7 @@ vnoremap <m-k> "td2k"tp'[V']
 vnoremap <m-j> "td"tp'[V']
 
 " Control-backspace deletes a word
-inoremap <c-bs> <esc>dbxi
+inoremap <c-bs> <c-w>
 
 " Control-delete deletes a word
 inoremap <C-Del> <esc>dwi
@@ -617,28 +638,41 @@ inoremap <silent> <c-s> <esc>:update<cr>a
 nnoremap Y y$
 
 " Map gV to select previous visual selection
-nnoremap gV `[v`]
+" nnoremap gV `[v`]
 
 " Escape when writing jk in insert mode
 inoremap <silent> jk <esc>
+vnoremap <silent> jk <esc>
 
 " 'Inside fold' text object
 onoremap iz :<c-u>normal! [zV]z<cr>
 
+" Add N to the number after the cursor
+nnoremap + <c-a>
+" Substract N to the number after the cursor
+nnoremap - <c-x>
+
+" Switch tabs
+nnoremap <c-t> gt
+inoremap <c-t> gt
+
+
+" let g:restrained_mode = ''
 if exists("g:restrained_mode")
     inoremap <silent> <esc> <nop>
+    vnoremap <silent> <esc> <nop>
+    nnoremap <silent> <up> <nop>
+    nnoremap <silent> <down> <nop>
+    nnoremap <silent> <left> <nop>
+    nnoremap <silent> <right> <nop>
     inoremap <silent> <up> <nop>
     inoremap <silent> <down> <nop>
     inoremap <silent> <left> <nop>
     inoremap <silent> <right> <nop>
-    nnoremap <silent> h <nop>
-    nnoremap <silent> j <nop>
-    nnoremap <silent> k <nop>
-    nnoremap <silent> l <nop>
-    vnoremap <silent> h <nop>
-    vnoremap <silent> j <nop>
-    vnoremap <silent> k <nop>
-    vnoremap <silent> l <nop>
+    vnoremap <silent> <up> <nop>
+    vnoremap <silent> <down> <nop>
+    vnoremap <silent> <left> <nop>
+    vnoremap <silent> <right> <nop>
 endif
 
 
@@ -673,7 +707,6 @@ command! DeleteUnlistedBuffers call DeleteUnlistedBuffers()
 " Install required dictionary files and vim plug automatically to the
 " corresponding destinations
 function! QuickSetup()
-
     " First make sure requirements are met
     if !executable("wget")
         echoerr "You do not have wget. Install it for Windows through:\n"
@@ -828,8 +861,6 @@ function! QuickSetup()
                     \ . "extracted files inside `$VIMRUNTIME/programming`\n"
         return ""
     endif
-
-
 endfunction
 
 
@@ -880,13 +911,11 @@ function! UploadVIMRC()
 
     " Go back to what was the current directory
     execute 'cd ' . fnameescape(l:current_directory)
-
 endfunction
 
 
 " Download current VIMRC in github to VIM
 function! DownloadVIMRC()
-
     let l:current_directory = getcwd()
 
     " Change to VIMRC directory
@@ -948,7 +977,6 @@ let s:self_closing_tags = {
             \   "col": "true",    "track": "true" ,
             \   "metas": "true",  "!--": "true" }
 
-
 function! AutoCompleteTag(mode)
     " inoremap >> ><esc>T<"tyi>f>a</<c-r>t><esc>T>i<c-r>=Eatchar('\s')<cr>
 
@@ -982,7 +1010,6 @@ function! AutoCompleteTag(mode)
     endif
 
     return 'a'
-
 endfunction
 
 if has('autocmd')
@@ -1077,7 +1104,6 @@ function! RunCodeDynamically(output)
     " execute l:current_buffer ."wincmd w"
 endfunction
 
-
 " Function used to run the code in several ways as long as it is a supported filetypes
 function! RunCode()
     if has("terminal")
@@ -1091,15 +1117,15 @@ function! RunCode()
 
             let l:commands = []
             if g:venv_environment == ""
-            let l:commands = [
-                        \ "python " . l:full_path
-                        \ ]
+                let l:commands = [
+                            \ "python " . l:full_path
+                            \ ]
             else
-            let l:commands = [
-                        \ "venv activate " . g:venv_environment,
-                        \ "activate",
-                        \ "python " . l:full_path
-                        \ ]
+                let l:commands = [
+                            \ "venv activate " . g:venv_environment,
+                            \ "activate",
+                            \ "python " . l:full_path
+                            \ ]
             endif
             " Send these commands to another function to actually be run
             call RunCodeDynamically(l:commands)
@@ -1205,6 +1231,45 @@ endfunction
 nnoremap <silent> <m-.> :call SetFontSize(GetFontSize() + 1)<cr>:redraw<cr>:echo "Font size: " . GetFontSize()<cr>
 nnoremap <silent> <m-,> :call SetFontSize(GetFontSize() - 1)<cr>:redraw<cr>:echo "Font size: " . GetFontSize()<cr>
 
+" Write Random numbers under cursor. If length > 1, values are separated by commas
+function! RandHere(min, max, length)
+    if has('python3')
+        python3 << endPython
+import random
+import vim
+
+low = str(vim.eval('a:min'))
+high = str(vim.eval('a:max'))
+length = int(vim.eval('a:length'))
+
+low = float(low) if '.' in low else int(low)
+high = float(high) if '.' in high else int(high)
+
+output = []
+for i in range(length):
+    if low == 0.0 and high == 1.0:
+        rand = random.random()
+        rand = round(rand, 2)
+        output.append(rand)
+    elif isinstance(low, int) and isinstance(high, int):
+        randInt = random.randint(int(low), int(high))
+        output.append(randInt)
+    else:
+        rand = random.random()
+        rand = (rand - 0) * (high - low) / (1 - 0) + low
+        rand = round(rand, 2)
+        output.append(rand)
+
+output = str(output)[1:-1]
+
+col = vim.current.window.cursor[1]
+vim.current.line = vim.current.line[:col] + output + vim.current.line[col:]
+endPython
+        return ''
+    else
+        return ''
+    endif
+endfunction
 
 " Work in progres ...
 function! CreateList()
@@ -1258,6 +1323,10 @@ Plug 'mattn/emmet-vim'
 " CSS
 Plug 'ap/vim-css-color'
 
+" JavaScript
+Plug 'pangloss/vim-javascript'
+Plug 'MaxMEllon/vim-jsx-pretty'
+
 " PHP
 Plug 'StanAngeloff/php.vim'
 
@@ -1267,6 +1336,9 @@ Plug 'StanAngeloff/php.vim'
 Plug 'gi1242/vim-tex-syntax'
 
 call plug#end()
+
+
+let g:javascript_plugin_jsdoc = 1
 
 " }}}
 " 2) ALE {{{
@@ -1528,6 +1600,7 @@ let g:rainbow_active = 1
 " }}}
 
 if isdirectory('C:\Users\m4rc0\Desktop')
+    " Directory to start browsing in
     cd C:\Users\m4rc0
 endif
 
