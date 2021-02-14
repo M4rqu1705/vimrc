@@ -17,7 +17,7 @@ elseif has('macunix')
 endif
 
 " Store the directory separator in a variable for later use
-let s:directory_separator = (match($VIMRUNTIME, "\/") > 0) ? '/' : '\'
+let s:directory_separator = (match($VIMRUNTIME, "\/") >= 0) ? '/' : '\'
 
 " Generate path depending on its directory and separators
 function! ComposeDirectory(...)
@@ -42,7 +42,7 @@ let g:vimrc_path = ''
 if s:OS == 'Windows'
     let g:vimrc_path = ComposeDirectory($HOME, "_vimrc")
 else
-    let g:vimrc_path = ComposeDirectory($HOME, ".vimrc")
+    let g:vimrc_path = ".vimrc"
 endif
 
 
@@ -145,8 +145,8 @@ if has('autocmd')
     augroup Themes
         autocmd!
         " autocmd VimEnter * colorscheme tender
-        autocmd VimEnter * colorscheme onehalfdark
-        " autocmd VimEnter * silent! colorscheme monokai
+        " autocmd VimEnter * colorscheme onehalfdark
+        autocmd VimEnter * silent! colorscheme monokai
     augroup END
 else
     echoerr "[×] ERROR: NO AUTOCMD - Could not set colorscheme"
@@ -263,6 +263,7 @@ set timeoutlen=2000                 " How long it wait for mapped commands
 set omnifunc=syntaxcomplete#Complete
 set complete=.,w,b,d,u,t
 set completeopt=longest,menuone,preview
+set pumheight=15
 
 inoremap <expr> <CR> pumvisible() ? "\<C-y>" : "\<C-g>u\<CR>"
 inoremap <expr> <C-n> pumvisible() ? '<C-n>' :
@@ -270,16 +271,16 @@ inoremap <expr> <C-n> pumvisible() ? '<C-n>' :
 
 inoremap <expr> <a-,> pumvisible() ? '<C-n>' : '<C-x><C-o><C-n><C-p><C-r>=pumvisible() ? "\<lt>Down>" : ""<CR>'
 
-function! Tab_Or_Complete()
-    if col('.')>1 && strpart( getline('.'), col('.')-2, 3 ) =~ '^\w'
-        return "\<C-N>"
-    else
-        return "\<Tab>"
-    endif
-endfunction
+" function! Tab_Or_Complete()
+    " if col('.')>1 && strpart( getline('.'), col('.')-2, 3 ) =~ '^\w'
+        " return "\<C-N>"
+    " else
+        " return "\<Tab>"
+    " endif
+" endfunction
 
-inoremap <silent> <Tab> <C-R>=Tab_Or_Complete()<CR>
-inoremap <expr> <s-tab> pumvisible() ? "\<c-o>" : "\<c-x>\<c-o>"
+" inoremap <silent> <Tab> <C-R>=Tab_Or_Complete()<CR>
+" inoremap <expr> <s-tab> pumvisible() ? "\<c-o>" : "\<c-x>\<c-o>"
 
 " https://vim.fandom.com/wiki/Make_Vim_completion_popup_menu_work_just_like_in_an_IDE
 " https://medium.com/usevim/vim-101-completion-compendium-97b4ebc3a45a
@@ -494,6 +495,7 @@ if has("terminal")
     for directory in s:git_directories
         if !isdirectory(directory)
             unlet s:git_directories
+            break
         endif
     endfor
 
@@ -1310,6 +1312,8 @@ Plug 'tpope/vim-surround'
 Plug 'tpope/vim-repeat'
 Plug 'easymotion/vim-easymotion'
 
+Plug 'ervandew/supertab'
+
 " Themes
 " Plug 'sonph/onehalf'
 Plug 'jacoborus/tender.vim'
@@ -1327,8 +1331,8 @@ Plug 'ap/vim-css-color'
 Plug 'pangloss/vim-javascript'
 Plug 'MaxMEllon/vim-jsx-pretty'
 
-" PHP
-Plug 'StanAngeloff/php.vim'
+" C++
+Plug 'xavierd/clang_complete'
 
 " Python
 
@@ -1366,6 +1370,13 @@ let g:ale_linters_explicit = 1
 let g:ale_linters = {
             \ 'python': ['pyflakes'],
             \ 'javascript': ['eslint'],
+            \ 'c': ['clang'],
+            \ 'cpp': ['clang']
+            \ }
+
+let g:ale_fixers = {
+            \ 'c': ['clangtidy'],
+            \ 'cpp': ['clangtidy']
             \ }
 
 
@@ -1595,6 +1606,23 @@ vnoremap <silent> <leader>cy :call NERDComment('x', 'yank')<cr>
 " }}}
 " 11) Vim Rainbow {{{
 let g:rainbow_active = 1
+
+
+" }}}
+" 12) Clang Complete {{{
+ " path to directory where library can be found
+ let g:clang_library_path='/usr/lib/llvm-10/lib'
+ " or path directly to the library file
+ let g:clang_library_path='/usr/lib/llvm-10/lib/libclang-10.so.1'
+
+" Disable auto popup, use <Tab> to autocomplete
+ let g:clang_complete_auto = 0
+ " Show clang errors in the quickfix window
+ let g:clang_complete_copen = 1
+
+" }}}
+" 13) SuperTab {{{
+let g:SuperTabDefaultCompletionType = "context"
 
 
 " }}}
