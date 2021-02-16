@@ -192,7 +192,7 @@ set history=999             " Increase history (default = 20)
 set undolevels=999          " More undo (default=100)
 
 if has('persistent_undo')
-    let s:undo_directory = ComposeDirectory($VIMRUNTIME, "temp", "undo")
+    let s:undo_directory = ComposeDirectory($HOME, "temp", "undo")
     if !isdirectory(s:undo_directory) && exists("*mkdir")
         call mkdir(s:undo_directory, "p")
     endif
@@ -255,7 +255,7 @@ set nostartofline                       " Make sure cursor remains where it is
 " }}}
 " 12) Keys {{{
 set backspace=indent,eol,start      " Allow backspacing over everything.
-set timeoutlen=2000                 " How long it wait for mapped commands
+set timeoutlen=500                 " How long it wait for mapped commands
 
 
 " }}}
@@ -612,25 +612,34 @@ endif
 nnoremap n nzzzv
 nnoremap N Nzzzv
 
-" Move line up
-nnoremap <m-k> "tdd2k"tp
 " Move line down
-nnoremap <m-j> "tdd"tp
+nnoremap <m-j> :m .+1<CR>==
+nnoremap j :m .+1<CR>==
+inoremap <m-j> <Esc>:m .+1<CR>==gi
+inoremap j <Esc>:m .+1<CR>==gi
+vnoremap <m-j> :m '>+1<CR>gv=gv
+vnoremap j :m '>+1<CR>gv=gv
 
-" Move lines up
-vnoremap <m-k> "td2k"tp'[V']
-" Move lines down
-vnoremap <m-j> "td"tp'[V']
+" Move line up
+nnoremap <m-k> :m .-2<CR>==
+nnoremap k :m .-2<CR>==
+inoremap <m-k> <Esc>:m .-2<CR>==gi
+inoremap k <Esc>:m .-2<CR>==gi
+vnoremap <m-k> :m '<-2<CR>gv=gv
+vnoremap k :m '<-2<CR>gv=gv
 
 " Control-backspace deletes a word
 inoremap <c-bs> <c-w>
+inoremap  <c-w>
 
 " Control-delete deletes a word
-inoremap <C-Del> <esc>dwi
+inoremap <c-del> <esc>dwi
+inoremap [3;5~] <esc>dwi
 
 " Control-a selects all in v-line mode
 inoremap <c-a> <esc>ggVG
 nnoremap <c-a> ggVG
+vnoremap <c-a> <esc>ggVG
 
 " Control-s updates file contents
 nnoremap <silent> <c-s> :update<cr>
@@ -1168,10 +1177,21 @@ function! RunCode()
 
         elseif &filetype == 'cpp' || &filetype == 'c'
             " C --- C++ --- C --- C++ --- C --- C++ --- C --- C++ --- C --------
-            let l:commands = [
-                        \ "g++ " . l:full_path,
-                        \ "a.exe"
-                        \ ]
+
+            let l:commands = []
+
+            if s:OS == "Windows"
+                let l:commands = [
+                            \ "g++ " . l:full_path,
+                            \ "a.exe"
+                            \ ]
+            else
+                let l:commands = [
+                            \ "g++ " . l:full_path,
+                            \ "./a.out"
+                            \ ]
+            endif
+
             " Send these commands to another function to actually be run
             call RunCodeDynamically(l:commands)
 
@@ -1200,7 +1220,9 @@ function! RunCode()
 endfunction
 
 nnoremap <silent> <c-enter> :call RunCode()<cr>
+nnoremap <silent>  :call RunCode()<cr>
 inoremap <silent> <c-enter> <esc>:call RunCode()<cr>
+inoremap <silent>  <esc>:call RunCode()<cr>
 
 
 function! SetFontSize(size)
@@ -1305,7 +1327,7 @@ Plug 'dense-analysis/ale'
 Plug 'junegunn/fzf'
 Plug 'junegunn/fzf.vim'
 " Plug 'skywind3000/asyncrun.vim'
-Plug 'vim-scripts/auto-pairs-gentle'
+Plug 'cohama/lexima.vim'
 Plug 'frazrepo/vim-rainbow'
 Plug 'scrooloose/nerdcommenter'
 Plug 'tpope/vim-surround'
@@ -1390,23 +1412,8 @@ nmap <silent> <leader>ak :ALEPrevious<cr>
 
 
 " }}}
-" 3) AutoPairs {{{
-let g:AutoPairsFlyMode = 0
-let g:AutoPairsUseInsertedCount = 1
-let g:AutoPairsMapCh = 0
-
-if has('autocmd')
-    augroup AutoPairs
-        autocmd!
-        autocmd VimEnter unmap <M-p>
-        autocmd VimEnter unmap <M-e>
-        autocmd VimEnter unmap <M-n>
-        autocmd VimEnter unmap <M-b>
-        autocmd VimEnter unmap <c-h>
-    augroup END
-else
-    echoerr "[×] ERROR: NO AUTOCMD - Could not unmap unwanted auto-pairs shortcuts"
-endif
+" 3) Lexima {{{
+" https://github.com/cohama/lexima.vim
 
 
 " }}}
